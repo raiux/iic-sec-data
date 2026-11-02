@@ -1,10 +1,32 @@
-{
-  "schema": 1,
-  "companies": [
-    {
-      "name": "Cameco",
-      "ticker": "NYSE:CCJ",
-      "isin": "CA13321L1085"
-    }
-  ]
-}
+name: IIC SEC financial facts
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "20 5 * * *"
+permissions:
+  contents: write
+concurrency:
+  group: iic-sec-collector
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch official SEC data
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: python scripts/collect_sec.py
+      - name: Publish updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sec_facts.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update SEC XBRL facts"
+            git push
+          fi
