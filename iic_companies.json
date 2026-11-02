@@ -1,12 +1,15 @@
-[
-  {
-    "name": "Cameco",
-    "ticker": "NYSE:CCJ",
-    "cik": "0001009001"
-  },
-  {
-    "name": "Microsoft",
-    "ticker": "NASDAQ:MSFT",
-    "cik": "0000789019"
-  }
-]
+
+{
+  "companies": [
+    {
+      "name": "Cameco",
+      "ticker": "NYSE:CCJ",
+      "cik": "0001009001"
+    },
+    {
+      "name": "Microsoft",
+      "ticker": "NASDAQ:MSFT",
+      "cik": "0000789019"
+    }
+  ]
+}
