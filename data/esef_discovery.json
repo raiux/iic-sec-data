@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "generated_at": "2026-11-02T21:39:47.694224+00:00",
+  "purpose": "discovery_only_no_financial_facts",
+  "companies": [
+    {
+      "company": "VINCI",
+      "country": "FR",
+      "status": "FOUND",
+      "filings": [
+        {
+          "filing_id": "23793",
+          "attributes": {
+            "period_end": "2025-12-31",
+            "country": "FR",
+            "fxo_id": "213800WFQ334R8UXUG83-2025-12-31-ESEF-FR-0",
+            "date_added": "2026-03-04 13:58:05.572229",
+            "processed": "2026-03-17 17:49:35.025336",
+            "published": "2026-02-27 09:17:56",
+            "sha256": "2885234896951408e516e26c602fd79d262872238d7cf213d649618324a7a31e",
+            "viewer_url": "/213800WFQ334R8UXUG83/2025-12-31/ESEF/FR/0/VINCI-2025-12-31-1-fr/reports/ixbrlviewer.html",
+            "package_url": "/213800WFQ334R8UXUG83/2025-12-31/ESEF/FR/0/VINCI-2025-12-31-1-fr.zip",
+            "report_url": "/213800WFQ334R8UXUG83/2025-12-31/ESEF/FR/0/VINCI-2025-12-31-1-fr/reports/VINCI-2025-12-31-1-fr.xhtml",
+            "json_url": "/213800WFQ334R8UXUG83/2025-12-31/ESEF/FR/0/VINCI-2025-12-31-1-fr.json",
+            "error_count": 0,
+            "warning_count": 0,
+            "inconsistency_count": 0
+          },
+          "entity": {
+            "identifier": "213800WFQ334R8UXUG83",
+            "name": "VINCI"
+          },
+          "source": "https://filings.xbrl.org/api/filings"
+        },
+        {
+          "filing_id": "17110",
+          "attributes": {
+            "period_end": "2024-12-31",
+            "country": "FR",
+            "fxo_id": "213800WFQ334R8UXUG83-2024-12-31-ESEF-FR-0",
+            "date_added": "2025-03-04 11:04:06.714294",
+            "processed": "2025-03-04 12:01:22.726361",
+            "published": "2025-02-28 13:09:53",
+            "sha256": "eb78f8fb8d1348bc1dcdd4e4071c42574dba0ac42f55cd43fa7b68fc5fd87864",
+            "viewer_url": "/213800WFQ334R8UXUG83/2024-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2024-12-31-1-fr/reports/ixbrlviewer.html",
+            "package_url": "/213800WFQ334R8UXUG83/2024-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2024-12-31-1-fr.zip",
+            "report_url": "/213800WFQ334R8UXUG83/2024-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2024-12-31-1-fr/reports/213800WFQ334R8UXUG83-2024-12-31-1-fr.xhtml",
+            "json_url": "/213800WFQ334R8UXUG83/2024-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2024-12-31-1-fr.json",
+            "error_count": 0,
+            "warning_count": 0,
+            "inconsistency_count": 0
+          },
+          "entity": {
+            "identifier": "213800WFQ334R8UXUG83",
+            "name": "VINCI"
+          },
+          "source": "https://filings.xbrl.org/api/filings"
+        },
+        {
+          "filing_id": "12530",
+          "attributes": {
+            "period_end": "2023-12-31",
+            "country": "FR",
+            "fxo_id": "213800WFQ334R8UXUG83-2023-12-31-ESEF-FR-0",
+            "date_added": "2024-03-05 12:18:02.627036",
+            "processed": "2024-03-05 13:07:34.764514",
+            "published": null,
+            "sha256": "411a8e2b765c019332732b5eb7a8d64bb82c141d954d062a473025d3bd696baf",
+            "viewer_url": "/213800WFQ334R8UXUG83/2023-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2023-12-31-fr/reports/ixbrlviewer.html",
+            "package_url": "/213800WFQ334R8UXUG83/2023-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2023-12-31-fr.zip",
+            "report_url": "/213800WFQ334R8UXUG83/2023-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2023-12-31-fr/reports/213800WFQ334R8UXUG83-2023-12-31-fr.xhtml",
+            "json_url": "/213800WFQ334R8UXUG83/2023-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2023-12-31-fr.json",
+            "error_count": 0,
+            "warning_count": 0,
+            "inconsistency_count": 0
+          },
+          "entity": {
+            "identifier": "213800WFQ334R8UXUG83",
+            "name": "VINCI"
+          },
+          "source": "https://filings.xbrl.org/api/filings"
+        },
+        {
+          "filing_id": "4393",
+          "attributes": {
+            "period_end": "2022-12-31",
+            "country": "FR",
+            "fxo_id": "213800WFQ334R8UXUG83-2022-12-31-ESEF-FR-0",
+            "date_added": "2023-03-02 10:04:28.472461",
+            "processed": "2023-04-19 11:40:14.697278",
+            "published": null,
+            "sha256": "5f7692fe9802ba6b9535d0f2b4cad9d5f0bce703d217e961acfd3cb8d9e83280",
+            "viewer_url": "/213800WFQ334R8UXUG83/2022-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2022-12-31AR/reports/ixbrlviewer.html",
+            "package_url": "/213800WFQ334R8UXUG83/2022-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2022-12-31AR.zip",
+            "report_url": "/213800WFQ334R8UXUG83/2022-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2022-12-31AR/reports/213800WFQ334R8UXUG83-2022-12-31AR.xhtml",
+            "json_url": "/213800WFQ334R8UXUG83/2022-12-31/ESEF/FR/0/213800WFQ334R8UXUG83-2022-12-31AR.json",
+            "error_count": 0,
+            "warning_count": 1,
+            "inconsistency_count": 30
+          },
+          "entity": {
+            "identifier": "213800WFQ334R8UXUG83",
+            "name": "VINCI"
+          },
+          "source": "https://filings.xbrl.org/api/filings"
+        }
+      ]
+    },
+    {
+      "company": "Siemens AG",
+      "country": "DE",
+      "status": "NOT_FOUND",
+      "filings": []
+    }
+  ]
+}
