@@ -1,32 +1,66 @@
+
 name: IIC SEC financial facts
+
 on:
   workflow_dispatch:
   schedule:
     - cron: "20 5 * * *"
+
 permissions:
   contents: write
+
 concurrency:
   group: iic-sec-collector
   cancel-in-progress: false
+
 jobs:
   collect:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Fetch official SEC data
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
-        run: python scripts/collect_sec.py
-      - name: Publish updated data
+          IIC_SEC_INTERVAL_SECONDS: "1"
         run: |
+          python scripts/collect_sec.py
+
+      - name: Publish updated data
+        shell: bash
+        run: |
+          set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add data/sec_facts.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Update SEC XBRL facts"
-            git push
+
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+            exit 0
           fi
+
+          git commit -m "Update SEC XBRL facts"
+
+          echo "Fetching latest main branch..."
+          git fetch origin main
+
+          echo "Rebasing on latest main..."
+          git rebase origin/main
+
+          echo "Publishing SEC facts..."
+          git push origin HEAD:main
+
+          echo "SEC facts published successfully."
