@@ -1,0 +1,45 @@
+name: IIC V5 - VINCI indicative earnings valuation
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/value_earnings.py'
+      - 'tests/test_value_earnings.py'
+      - 'data/vinci_earnings_assumptions_2025.json'
+      - 'data/vinci_enriched_2025.json'
+      - '.github/workflows/value-earnings.yml'
+  push:
+    branches:
+      - main
+      - 'feature/**'
+    paths:
+      - 'scripts/value_earnings.py'
+      - 'tests/test_value_earnings.py'
+      - 'data/vinci_earnings_assumptions_2025.json'
+      - 'data/vinci_enriched_2025.json'
+      - '.github/workflows/value-earnings.yml'
+jobs:
+  indicative_value:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test original DCF and new earnings valuation
+        run: |
+          python -m unittest discover -s tests -p 'test_value_company.py' -v
+          python -m unittest discover -s tests -p 'test_value_earnings.py' -v
+      - name: Compute first real-financials indicative range
+        run: |
+          python scripts/value_earnings.py \
+            --assumptions data/vinci_earnings_assumptions_2025.json \
+            --enriched data/vinci_enriched_2025.json \
+            --output out/vinci_earnings_indicative_2025.json
+      - name: Upload indicative result
+        uses: actions/upload-artifact@v4
+        with:
+          name: iic-v5-vinci-earnings-indicative
+          path: out/vinci_earnings_indicative_2025.json
