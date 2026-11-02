@@ -1,0 +1,139 @@
+{
+  "schema": 2,
+  "company": "VINCI",
+  "fiscal_year": 2025,
+  "source_document": "https://filings.xbrl.org/213800WFQ334R8UXUG83/2025-12-31/ESEF/FR/0/VINCI-2025-12-31-1-fr.json",
+  "input_coverage": "test_subset",
+  "generated_at": "2026-11-02T22:22:02.343314+00:00",
+  "metrics": {
+    "revenue": {
+      "status": "CANDIDATE",
+      "value": "75372000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:RevenueFromContractsWithCustomers",
+      "matched_concepts": [
+        "ifrs-full:RevenueFromContractsWithCustomers"
+      ],
+      "source_fact_ids": [
+        "reg-ix-6"
+      ],
+      "candidate_count": 1,
+      "reason": "Matching exact period, unit and undimensioned entity; accounting validation pending"
+    },
+    "operating_profit": {
+      "status": "CANDIDATE",
+      "value": "9364000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:ProfitLossFromOperatingActivities",
+      "matched_concepts": [
+        "ifrs-full:ProfitLossFromOperatingActivities"
+      ],
+      "source_fact_ids": [
+        "reg-ix-24"
+      ],
+      "candidate_count": 1,
+      "reason": "Matching exact period, unit and undimensioned entity; accounting validation pending"
+    },
+    "net_income_consolidated": {
+      "status": "CANDIDATE",
+      "value": "5275000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:ProfitLoss",
+      "matched_concepts": [
+        "ifrs-full:ProfitLoss"
+      ],
+      "source_fact_ids": [
+        "reg-ix-36",
+        "reg-ix-46",
+        "reg-ix-174",
+        "reg-ix-418"
+      ],
+      "candidate_count": 4,
+      "reason": "Matching exact period, unit and undimensioned entity; accounting validation pending"
+    },
+    "net_income_parent": {
+      "status": "CANDIDATE",
+      "value": "4903000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:ProfitLossAttributableToOwnersOfParent",
+      "matched_concepts": [
+        "ifrs-full:ProfitLossAttributableToOwnersOfParent"
+      ],
+      "source_fact_ids": [
+        "reg-ix-40"
+      ],
+      "candidate_count": 1,
+      "reason": "Matching exact period, unit and undimensioned entity; accounting validation pending"
+    },
+    "operating_cash_flow": {
+      "status": "CANDIDATE",
+      "value": "11886000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:CashFlowsFromUsedInOperatingActivities",
+      "matched_concepts": [
+        "ifrs-full:CashFlowsFromUsedInOperatingActivities"
+      ],
+      "source_fact_ids": [
+        "reg-ix-206"
+      ],
+      "candidate_count": 1,
+      "reason": "Matching exact period, unit and undimensioned entity; accounting validation pending"
+    },
+    "cash_and_equivalents": {
+      "status": "CANDIDATE",
+      "value": "17254000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:CashAndCashEquivalents",
+      "matched_concepts": [
+        "ifrs-full:CashAndCashEquivalents"
+      ],
+      "source_fact_ids": [
+        "reg-ix-108"
+      ],
+      "candidate_count": 1,
+      "reason": "Matching exact period, unit and undimensioned entity; accounting validation pending"
+    },
+    "total_assets": {
+      "status": "CANDIDATE",
+      "value": "133065000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:Assets",
+      "matched_concepts": [
+        "ifrs-full:Assets"
+      ],
+      "source_fact_ids": [
+        "reg-ix-114"
+      ],
+      "candidate_count": 1,
+      "reason": "Matching exact period, unit and undimensioned entity; accounting validation pending"
+    },
+    "total_equity": {
+      "status": "MISSING",
+      "value": null,
+      "currency": "EUR",
+      "concept": null,
+      "matched_concepts": [],
+      "source_fact_ids": [],
+      "candidate_count": 0,
+      "reason": "No eligible fact in supplied input"
+    },
+    "total_liabilities": {
+      "status": "MISSING",
+      "value": null,
+      "currency": "EUR",
+      "concept": null,
+      "matched_concepts": [],
+      "source_fact_ids": [],
+      "candidate_count": 0,
+      "reason": "No eligible fact in supplied input"
+    }
+  },
+  "checks": [
+    {
+      "name": "balance_sheet_identity",
+      "status": "NOT_TESTED",
+      "reason": "Missing or conflicting components"
+    }
+  ],
+  "source_file": "data/vinci_xbrl_test.json"
+}
