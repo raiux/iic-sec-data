@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "company": "VINCI",
+  "fiscal_year": 2025,
+  "published_source_url": "https://www.vinci.com/en/finance/results-and-key-figures/2025-annual-financial-statements",
+  "published_press_release_url": "https://www.vinci.com/en/newsroom/press-releases/outstanding-performance-record-free-cash-flow",
+  "reported_financials": {
+    "2024": {
+      "net_income_parent_eur": "4863000000",
+      "diluted_eps_eur": "8.43"
+    },
+    "2025": {
+      "net_income_parent_eur": "4903000000",
+      "diluted_eps_eur": "8.65",
+      "free_cash_flow_eur": "7010000000",
+      "net_financial_debt_eur": "19100000000"
+    }
+  },
+  "scenarios": {
+    "bear": {
+      "next_year_eps_growth": "-0.03",
+      "pe_multiple": "10"
+    },
+    "base": {
+      "next_year_eps_growth": "0.03",
+      "pe_multiple": "14"
+    },
+    "bull": {
+      "next_year_eps_growth": "0.07",
+      "pe_multiple": "18"
+    }
+  },
+  "central_counter_scenario": {
+    "eps_shock": "-0.15",
+    "pe_multiple_delta": "-2"
+  },
+  "assumptions_warning": "P/E multiples and future EPS growth are deliberately illustrative and not calibrated to comparable companies. Do not treat as a researched price target.",
+  "accounting_note": "Official balance sheet total equity EUR 34.428bn (2025), but ESEF mapped equity says EUR 34.328bn; validation pending. This P/E pilot uses earnings only; it cannot serve as a balance sheet validation."
+}
