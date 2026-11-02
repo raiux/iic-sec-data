@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "company": "VINCI",
+  "lei": "213800WFQ334R8UXUG83",
+  "fiscal_year": 2025,
+  "source_document": "https://filings.xbrl.org/213800WFQ334R8UXUG83/2025-12-31/ESEF/FR/0/VINCI-2025-12-31-1-fr.json",
+  "source_file": "data/vinci_xbrl_test.json",
+  "generated_at": "2026-11-02T22:12:04.499705+00:00",
+  "metrics": {
+    "revenue": {
+      "status": "MISSING",
+      "value": null,
+      "currency": "EUR",
+      "concept": "ifrs-full:Revenue",
+      "source_fact_ids": [],
+      "candidate_count": 0,
+      "reason": "No exact eligible fact"
+    },
+    "net_income_consolidated": {
+      "status": "CANDIDATE",
+      "value": "5275000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:ProfitLoss",
+      "source_fact_ids": [
+        "reg-ix-36",
+        "reg-ix-46",
+        "reg-ix-174",
+        "reg-ix-418"
+      ],
+      "candidate_count": 4,
+      "reason": "Exact concept, period, currency and no extra dimensions; still requires accounting review"
+    },
+    "net_income_parent": {
+      "status": "CANDIDATE",
+      "value": "4903000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:ProfitLossAttributableToOwnersOfParent",
+      "source_fact_ids": [
+        "reg-ix-40"
+      ],
+      "candidate_count": 1,
+      "reason": "Exact concept, period, currency and no extra dimensions; still requires accounting review"
+    },
+    "operating_profit": {
+      "status": "CANDIDATE",
+      "value": "9364000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:ProfitLossFromOperatingActivities",
+      "source_fact_ids": [
+        "reg-ix-24"
+      ],
+      "candidate_count": 1,
+      "reason": "Exact concept, period, currency and no extra dimensions; still requires accounting review"
+    },
+    "operating_cash_flow": {
+      "status": "CANDIDATE",
+      "value": "11886000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:CashFlowsFromUsedInOperatingActivities",
+      "source_fact_ids": [
+        "reg-ix-206"
+      ],
+      "candidate_count": 1,
+      "reason": "Exact concept, period, currency and no extra dimensions; still requires accounting review"
+    },
+    "cash_and_equivalents": {
+      "status": "CANDIDATE",
+      "value": "17254000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:CashAndCashEquivalents",
+      "source_fact_ids": [
+        "reg-ix-108"
+      ],
+      "candidate_count": 1,
+      "reason": "Exact concept, period, currency and no extra dimensions; still requires accounting review"
+    },
+    "total_assets": {
+      "status": "CANDIDATE",
+      "value": "133065000000.0",
+      "currency": "EUR",
+      "concept": "ifrs-full:Assets",
+      "source_fact_ids": [
+        "reg-ix-114"
+      ],
+      "candidate_count": 1,
+      "reason": "Exact concept, period, currency and no extra dimensions; still requires accounting review"
+    }
+  }
+}
