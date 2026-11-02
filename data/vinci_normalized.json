@@ -5,16 +5,18 @@
   "fiscal_year": 2025,
   "source_document": "https://filings.xbrl.org/213800WFQ334R8UXUG83/2025-12-31/ESEF/FR/0/VINCI-2025-12-31-1-fr.json",
   "source_file": "data/vinci_xbrl_test.json",
-  "generated_at": "2026-11-02T22:12:04.499705+00:00",
+  "generated_at": "2026-11-02T22:14:57.460895+00:00",
   "metrics": {
     "revenue": {
-      "status": "MISSING",
-      "value": null,
+      "status": "CANDIDATE",
+      "value": "75372000000.0",
       "currency": "EUR",
-      "concept": "ifrs-full:Revenue",
-      "source_fact_ids": [],
-      "candidate_count": 0,
-      "reason": "No exact eligible fact"
+      "concept": "ifrs-full:RevenueFromContractsWithCustomers",
+      "source_fact_ids": [
+        "reg-ix-6"
+      ],
+      "candidate_count": 1,
+      "reason": "Exact concept, period, currency and no extra dimensions; still requires accounting review"
     },
     "net_income_consolidated": {
       "status": "CANDIDATE",
