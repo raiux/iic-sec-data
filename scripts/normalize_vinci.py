@@ -12,7 +12,7 @@ TARGET = ROOT / 'data' / 'vinci_normalized.json'
 
 # Exact concepts only: never guess a financial metric from keyword matches.
 CONCEPTS = {
-    'revenue': 'ifrs-full:Revenue',
+    'revenue': 'ifrs-full:RevenueFromContractsWithCustomers',
     'net_income_consolidated': 'ifrs-full:ProfitLoss',
     'net_income_parent': 'ifrs-full:ProfitLossAttributableToOwnersOfParent',
     'operating_profit': 'ifrs-full:ProfitLossFromOperatingActivities',
