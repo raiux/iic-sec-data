@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "companies": [
+    {
+      "name": "Cameco",
+      "ticker": "NYSE:CCJ",
+      "isin": "CA13321L1085"
+    }
+  ]
+}
