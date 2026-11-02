@@ -1,0 +1,51 @@
+name: IIC V5 - Collect and normalize full VINCI ESEF
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: iic-vinci-full-esef
+  cancel-in-progress: false
+jobs:
+  collect-and-normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -p 'test_esef_pipeline.py' -v
+      - name: Download complete VINCI XBRL-JSON
+        run: python scripts/collect_esef_full.py --output data/vinci_xbrl_full_2025.json
+      - name: Normalize complete report
+        run: python scripts/normalize_financials.py --input data/vinci_xbrl_full_2025.json --output data/vinci_normalized_full_2025.json --year 2025 --company VINCI
+      - name: Summarize results
+        run: |
+          python - <<'PY'
+          import json
+          p='data/vinci_normalized_full_2025.json'
+          d=json.load(open(p, encoding='utf8'))
+          assert d['input_coverage']=='full_xbrl_json', 'Unexpected partial coverage'
+          for name, item in d['metrics'].items():
+              print(f"{name}: {item['status']} {item['value']}")
+          for check in d['checks']:
+              print(f"CHECK {check['name']}: {check['status']}")
+          PY
+      - name: Commit normalized output only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/vinci_normalized_full_2025.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Update normalized VINCI full ESEF 2025'
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - name: Upload full source for audit (temporary artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: vinci-full-esef-2025
+          path: data/vinci_xbrl_full_2025.json
+          retention-days: 7
+  
