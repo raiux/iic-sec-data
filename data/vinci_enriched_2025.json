@@ -1,0 +1,704 @@
+{
+  "schema": 3,
+  "company": "VINCI",
+  "fiscal_year": 2025,
+  "source_document": "https://filings.xbrl.org/213800WFQ334R8UXUG83/2025-12-31/ESEF/FR/0/VINCI-2025-12-31-1-fr.json",
+  "input_coverage": "full_xbrl_json",
+  "generated_at": "2026-11-02T22:41:53.014467+00:00",
+  "metrics_by_year": {
+    "2024": {
+      "revenue": {
+        "status": "CANDIDATE",
+        "value": "72459000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:RevenueFromContractsWithCustomers",
+        "source_fact_ids": [
+          "reg-ix-7"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2024-01-01",
+          "2024-12-31"
+        ]
+      },
+      "operating_profit": {
+        "status": "CANDIDATE",
+        "value": "8783000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:ProfitLossFromOperatingActivities",
+        "source_fact_ids": [
+          "reg-ix-25"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2024-01-01",
+          "2024-12-31"
+        ]
+      },
+      "net_income_consolidated": {
+        "status": "CANDIDATE",
+        "value": "5274000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:ProfitLoss",
+        "source_fact_ids": [
+          "reg-ix-37",
+          "reg-ix-47",
+          "reg-ix-175",
+          "reg-ix-278"
+        ],
+        "candidate_count": 4,
+        "period": [
+          "2024-01-01",
+          "2024-12-31"
+        ]
+      },
+      "net_income_parent": {
+        "status": "CANDIDATE",
+        "value": "4863000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:ProfitLossAttributableToOwnersOfParent",
+        "source_fact_ids": [
+          "reg-ix-41"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2024-01-01",
+          "2024-12-31"
+        ]
+      },
+      "net_income_noncontrolling": {
+        "status": "CANDIDATE",
+        "value": "410000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:ProfitLossAttributableToNoncontrollingInterests",
+        "source_fact_ids": [
+          "reg-ix-39"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2024-01-01",
+          "2024-12-31"
+        ]
+      },
+      "operating_cash_flow": {
+        "status": "CANDIDATE",
+        "value": "11714000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:CashFlowsFromUsedInOperatingActivities",
+        "source_fact_ids": [
+          "reg-ix-207"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2024-01-01",
+          "2024-12-31"
+        ]
+      },
+      "cash_and_equivalents": {
+        "status": "CANDIDATE",
+        "value": "15199000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:CashAndCashEquivalents",
+        "source_fact_ids": [
+          "reg-ix-109"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2024-12-31"
+        ]
+      },
+      "total_assets": {
+        "status": "CANDIDATE",
+        "value": "129491000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:Assets",
+        "source_fact_ids": [
+          "reg-ix-115"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2024-12-31"
+        ]
+      },
+      "total_equity": {
+        "status": "CANDIDATE",
+        "value": "34032000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:Equity",
+        "source_fact_ids": [
+          "reg-ix-135",
+          "reg-ix-407",
+          "reg-ix-408"
+        ],
+        "candidate_count": 3,
+        "period": [
+          "2024-12-31"
+        ]
+      },
+      "total_liabilities": {
+        "status": "MISSING",
+        "value": null,
+        "currency": "EUR",
+        "concept": "ifrs-full:Liabilities",
+        "source_fact_ids": [],
+        "candidate_count": 0,
+        "period": [
+          "2024-12-31"
+        ]
+      }
+    },
+    "2025": {
+      "revenue": {
+        "status": "CANDIDATE",
+        "value": "75372000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:RevenueFromContractsWithCustomers",
+        "source_fact_ids": [
+          "reg-ix-6"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2025-01-01",
+          "2025-12-31"
+        ]
+      },
+      "operating_profit": {
+        "status": "CANDIDATE",
+        "value": "9364000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:ProfitLossFromOperatingActivities",
+        "source_fact_ids": [
+          "reg-ix-24"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2025-01-01",
+          "2025-12-31"
+        ]
+      },
+      "net_income_consolidated": {
+        "status": "CANDIDATE",
+        "value": "5275000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:ProfitLoss",
+        "source_fact_ids": [
+          "reg-ix-36",
+          "reg-ix-46",
+          "reg-ix-174",
+          "reg-ix-418"
+        ],
+        "candidate_count": 4,
+        "period": [
+          "2025-01-01",
+          "2025-12-31"
+        ]
+      },
+      "net_income_parent": {
+        "status": "CANDIDATE",
+        "value": "4903000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:ProfitLossAttributableToOwnersOfParent",
+        "source_fact_ids": [
+          "reg-ix-40"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2025-01-01",
+          "2025-12-31"
+        ]
+      },
+      "net_income_noncontrolling": {
+        "status": "CANDIDATE",
+        "value": "372000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:ProfitLossAttributableToNoncontrollingInterests",
+        "source_fact_ids": [
+          "reg-ix-38"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2025-01-01",
+          "2025-12-31"
+        ]
+      },
+      "operating_cash_flow": {
+        "status": "CANDIDATE",
+        "value": "11886000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:CashFlowsFromUsedInOperatingActivities",
+        "source_fact_ids": [
+          "reg-ix-206"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2025-01-01",
+          "2025-12-31"
+        ]
+      },
+      "cash_and_equivalents": {
+        "status": "CANDIDATE",
+        "value": "17254000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:CashAndCashEquivalents",
+        "source_fact_ids": [
+          "reg-ix-108"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2025-12-31"
+        ]
+      },
+      "total_assets": {
+        "status": "CANDIDATE",
+        "value": "133065000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:Assets",
+        "source_fact_ids": [
+          "reg-ix-114"
+        ],
+        "candidate_count": 1,
+        "period": [
+          "2025-12-31"
+        ]
+      },
+      "total_equity": {
+        "status": "CANDIDATE",
+        "value": "34328000000.0",
+        "currency": "EUR",
+        "concept": "ifrs-full:Equity",
+        "source_fact_ids": [
+          "reg-ix-134",
+          "reg-ix-538"
+        ],
+        "candidate_count": 2,
+        "period": [
+          "2025-12-31"
+        ]
+      },
+      "total_liabilities": {
+        "status": "MISSING",
+        "value": null,
+        "currency": "EUR",
+        "concept": "ifrs-full:Liabilities",
+        "source_fact_ids": [],
+        "candidate_count": 0,
+        "period": [
+          "2025-12-31"
+        ]
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "balance_sheet_identity",
+      "year": 2024,
+      "status": "NOT_TESTED",
+      "reason": "Independent tagged component missing or conflicting"
+    },
+    {
+      "name": "profit_attribution",
+      "year": 2024,
+      "status": "REVIEW",
+      "difference_eur": "1000000.0"
+    },
+    {
+      "name": "derived_liabilities_reference",
+      "year": 2024,
+      "status": "DERIVED_ONLY",
+      "value_eur": "95459000000.0",
+      "reason": "Assets minus equity; must not be used to independently pass balance sheet check"
+    },
+    {
+      "name": "balance_sheet_identity",
+      "year": 2025,
+      "status": "NOT_TESTED",
+      "reason": "Independent tagged component missing or conflicting"
+    },
+    {
+      "name": "profit_attribution",
+      "year": 2025,
+      "status": "PASS",
+      "difference_eur": "0.0"
+    },
+    {
+      "name": "derived_liabilities_reference",
+      "year": 2025,
+      "status": "DERIVED_ONLY",
+      "value_eur": "98737000000.0",
+      "reason": "Assets minus equity; must not be used to independently pass balance sheet check"
+    }
+  ],
+  "diagnostics": {
+    "candidate_concepts": [
+      {
+        "concept": "VINCI:Adjustmentsforinterestexpenseonleaseliabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "VINCI:Cashflowsusedinobtainingcontrolofsubsidiariesorotherbusinessespurchaseofinterestsininvestmentsaccountedforusingequitymethodandpurchaseofinvestmentsotherthaninvestmentsaccountedforusingequitymethodclassifiedasinvestingactivities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "VINCI:Increasedecreaseincurrentcashmanagementfinancialassetsandothercurrentfinancialliabilitiesclassifiedasfinancingactivities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "VINCI:Purchaseofconcessionfixedassetsnetofgrantsreceivedclassifiedasinvestingactivities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "VINCI:Purchaseofpropertyplantandequipmentandpurchaseofintangibleassetsclassifiedasinvestingactivities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:AdjustmentsForDepreciationAndAmortisationExpense",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:CashFlowsFromUsedInInvestingActivities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:CurrentDerivativeFinancialLiabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:CurrentLeaseLiabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:CurrentLiabilitiesOtherThanLiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:CurrentTaxLiabilitiesCurrent",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:DeferredTaxLiabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:DescriptionOfAccountingPolicyForBorrowingCostsExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DescriptionOfAccountingPolicyForBorrowingsExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DescriptionOfAccountingPolicyForContingentLiabilitiesAndContingentAssetsExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DescriptionOfAccountingPolicyForFinancialLiabilitiesExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DisclosureOfBorrowingCostsExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DisclosureOfBorrowingsExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DisclosureOfCommitmentsAndContingentLiabilitiesExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DisclosureOfContingentLiabilitiesExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DisclosureOfDepreciationAndAmortisationExpenseExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DisclosureOfDetailedInformationAboutBorrowingsExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DisclosureOfOtherCurrentLiabilitiesExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DisclosureOfOtherLiabilitiesExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:DisclosureOfOtherProvisionsContingentLiabilitiesAndContingentAssetsExplanatory",
+        "fact_count": 1,
+        "years": [
+          "2025"
+        ],
+        "units": []
+      },
+      {
+        "concept": "ifrs-full:EquityAndLiabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:LiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:NoncurrentDerivativeFinancialLiabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:NoncurrentLeaseLiabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:NoncurrentLiabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:NoncurrentPortionOfOtherNoncurrentBorrowings",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:OtherCurrentLiabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:OtherNoncurrentLiabilities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:PaymentsOfLeaseLiabilitiesClassifiedAsFinancingActivities",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:ProceedsFromNoncurrentBorrowings",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:RepaymentsOfNoncurrentBorrowings",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      },
+      {
+        "concept": "ifrs-full:ShorttermBorrowings",
+        "fact_count": 2,
+        "years": [
+          "2024",
+          "2025"
+        ],
+        "units": [
+          "iso4217:EUR"
+        ]
+      }
+    ],
+    "note": "Inventory only: debt, depreciation and CAPEX require accounting definition and validation before mapping."
+  }
+}
