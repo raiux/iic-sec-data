@@ -1,0 +1,37 @@
+name: IIC V5 - DCF valuation engine
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/value_company.py'
+      - 'scripts/prepare_vinci.py'
+      - 'tests/test_value_company.py'
+      - 'data/demo_synthetic.json'
+      - '.github/workflows/value-v5.yml'
+jobs:
+  valuation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test valuation engine
+        run: python -m unittest discover -s tests -p 'test_value_company.py' -v
+      - name: Compute synthetic example
+        run: python scripts/value_company.py --input data/demo_synthetic.json --output out/valuation_demo.json
+      - name: Prepare VINCI input from enriched report, if present
+        shell: bash
+        run: |
+          if [ -f data/vinci_enriched_2025.json ]; then
+            python scripts/prepare_vinci.py --input data/vinci_enriched_2025.json --output out/vinci_valuation_input.json
+            python scripts/value_company.py --input out/vinci_valuation_input.json --output out/vinci_valuation_status.json
+          else
+            echo 'VINCI enriched file not found; demo still runs.'
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iic-v5-valuation-results
+          path: out/
