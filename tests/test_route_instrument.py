@@ -61,6 +61,24 @@ class RouterTests(unittest.TestCase):
         self.assertFalse(route(known_ratio, SEC).instrument_valuation_eligible)
         self.assertTrue(route(replace(known_ratio, rights_ref='rights-record'), SEC).instrument_valuation_eligible)
 
+    def test_invalid_ratio_blocks_receipt_only(self):
+        invalid = ('2', 2, 2.0, True, {'ratio': 2}, float('nan'), float('inf'),
+                   Decimal('NaN'), Decimal('sNaN'), Decimal('Infinity'),
+                   Decimal('-Infinity'), Decimal('0'), Decimal('-1'))
+        for value in invalid:
+            with self.subTest(value=value):
+                receipt = replace(ADR, shares_per_receipt=value, ratio_ref='ratio', rights_ref='rights')
+                decision = route(receipt, SEC)
+                self.assertEqual(decision.status, 'ROUTABLE')
+                self.assertTrue(decision.issuer_collection_eligible and decision.collection_required)
+                self.assertFalse(decision.instrument_valuation_eligible)
+                self.assertEqual(decision.missing_fields, ('verified_shares_per_receipt',))
+
+    def test_exact_fractional_decimal_ratio_is_eligible(self):
+        receipt = replace(ADR, shares_per_receipt=Decimal('0.00000000000000000012345'),
+                          ratio_ref='ratio', rights_ref='rights')
+        self.assertTrue(route(receipt, SEC).instrument_valuation_eligible)
+
     def test_unknown_underlying_or_mismatched_filing(self):
         for instrument in (replace(ADR, issuer_id=None), replace(ADR, underlying_ref=''),
                            replace(ADR, issuer_id='different-issuer')):

@@ -13,14 +13,18 @@ class Instrument:
     conflicts: tuple[str, ...] = ()  # e.g. ISIN_CONFLICT, MIC_CONFLICT, AMBIGUOUS_TICKER
     listing_status: str = 'UNKNOWN'
     underlying_ref: str = ''
-    shares_per_receipt: Decimal | None = None
+    shares_per_receipt: Decimal | None = None  # Exact positive finite Decimal; no coercion or rounding.
     ratio_ref: str = ''
     rights_ref: str = ''  # References to verified, effective evidence for this receipt.
 
 
 @dataclass(frozen=True)
 class SourceEvidence:
-    """One proposed route; refs identify independently checked, dated evidence."""
+    """The caller supplies AUTHORIZED and refs from its own dated checks.
+
+    The router evaluates those assertions without verifying rights, opening refs
+    or probing a source. Fixture decisions do not establish real availability.
+    """
     adapter: str
     issuer_id: str
     access: str = 'UNKNOWN'  # AUTHORIZED, DENIED, UNKNOWN
@@ -98,7 +102,7 @@ def route(instrument: Instrument, source: SourceEvidence | None = None,
     missing = ()
     if adr:
         ratio = instrument.shares_per_receipt
-        if ratio is None or not ratio.is_finite() or ratio <= 0 or not instrument.ratio_ref:
+        if not isinstance(ratio, Decimal) or not ratio.is_finite() or ratio <= 0 or not instrument.ratio_ref:
             missing += ('verified_shares_per_receipt',)
         if not instrument.rights_ref:
             missing += ('verified_receipt_rights',)
