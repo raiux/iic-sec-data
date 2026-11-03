@@ -72,7 +72,7 @@ pas une date normalisée vérifiée.
 Un ratio ADR de forme JSON incorrecte est signalé par structure INVALID, mais
 peut conserver la collecte des comptes si l'émetteur et sa source sont admissibles.
 B2 retire le ratio invalide et B1 bloque alors la valorisation par reçu.
-Une erreur structurelle hors du ratio bloque la ligne en NEEDS_REVIEW.
+Une erreur structurelle hors des sous-arbres ratio/droits ADR bloque la ligne en NEEDS_REVIEW.
 Les ETF/ETN/FUND reconnus restent EXCLUDED avant toute invocation de route ou
 de collecteur, même si leur source est malformée. Les collisions placent toutes
 les lignes concernées en revue. Les sources indisponibles, interdites ou
@@ -131,8 +131,8 @@ git diff --check
 git diff --exit-code -- data tests/fixtures
 ```
 
-103 tests réussissent, sans omission, dont les 83 tests présents à la base.
-Les 20 tests B3 couvrent le méta-schéma, des dates impossibles, des références
+106 tests réussissent, sans omission, dont les 83 tests présents à la base.
+Les 23 tests B3 couvrent le méta-schéma, des dates impossibles, des références
 externes interdites, l'entrée CLI, la répétabilité octet pour octet, les portes
 de routage, les collisions, l'ADR, les preuves, la confidentialité et les
 contraintes du schéma de sortie. Les tests fonctionnels rendent l'appel SEC
@@ -171,3 +171,25 @@ ou objet) sont rejetées par ValueError avant startswith. Les références
 externes restent interdites. Trois tests supplémentaires couvrent ce cas
 et la frontière d'export. Les sorties privées conservent leurs assertions
 originelles, sans publier de nouveau JSON d'exemple contenant les marqueurs.
+
+## Revue discussion_r4457542565 — termes ADR et RFC 3339
+
+Une date compacte telle que 20261103T000000Z peut passer datetime.fromisoformat
+dans B2 tout en échouant au contrôle RFC 3339 de B3. La porte de valorisation
+est maintenant forcée à false pour toute structure INVALID. Le schéma de sortie
+impose aussi cet invariant, indépendamment de l'implémentation.
+
+Lorsque toutes les erreurs sont limitées à instrument.ratio et/ou
+instrument.rights d'un ADR, les termes concernés sont retirés d'une copie
+destinée à la réconciliation/routage. L'identité de l'émetteur et sa source
+doivent toujours satisfaire les portes B1/B2. La collecte simulée peut donc
+rester éligible, avec RECEIPT_SCHEMA_INVALID, tandis que la provenance privée
+conserve les termes originaux et que schema_errors expose leurs chemins.
+Les autres erreurs continuent de bloquer la ligne ; aucune preuve d'identité
+émetteur ou d'accès n'est remplacée.
+
+Les régressions couvrent ratio et droits, date compacte, type de date erroné,
+preuves mal typées et champs additionnels sur termes/preuves. Le reçu entièrement
+conforme est éligible seulement si les autres portes B1 le permettent. Le test
+de l'invariant de sortie refuse une porte de valorisation true avec structure
+INVALID. Toute la suite reste hors réseau. Aucun développement C1 n'est inclus.

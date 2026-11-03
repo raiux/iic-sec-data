@@ -1,5 +1,6 @@
 """B3: private planning envelope. Public export requires a separate reviewed projection."""
 import argparse
+import copy
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -154,18 +155,38 @@ def build_plan(payload, *, as_of):
 
     input_errors = [errors(input_validator.evolve(schema=input_validator.schema['items']), r)
                     for r in records]
-    prepared = reconcile(records, as_of=as_of)
+    # Receipt terms do not establish issuer identity. Remove only schema-invalid
+    # receipt terms from routing inputs, retaining the originals for private audit.
+    routing_records = copy.deepcopy(records)
+    receipt_errors = []
+    for record, routing_record, schema_errors in zip(records, routing_records, input_errors):
+        instrument = record.get('instrument') if isinstance(record, dict) else None
+        terms_only = (isinstance(instrument, dict) and instrument.get('kind') == 'ADR'
+                      and bool(schema_errors) and all(
+                          any(error['path'] == 'instrument/' + field
+                              or error['path'].startswith('instrument/' + field + '/')
+                              for field in ('ratio', 'rights'))
+                          for error in schema_errors))
+        receipt_errors.append(terms_only)
+        if terms_only:
+            for field in ('ratio', 'rights'):
+                if any(error['path'] == 'instrument/' + field
+                       or error['path'].startswith('instrument/' + field + '/')
+                       for error in schema_errors):
+                    routing_record['instrument'].pop(field, None)
+    prepared = reconcile(routing_records, as_of=as_of)
     seen = set()
     intents = {}
     for index, (record, item, schema_errors) in enumerate(zip(records, prepared, input_errors)):
         # Known ETF/ETN/FUND remain excluded even if the source part is malformed.
-        ratio_only = bool(schema_errors) and all(
-            error['path'] == 'instrument/ratio' or error['path'].startswith('instrument/ratio/')
-            for error in schema_errors)
-        if schema_errors and item.status != 'EXCLUDED' and not ratio_only:
+        if schema_errors and item.status != 'EXCLUDED' and not receipt_errors[index]:
             routed = dict(status='NEEDS_REVIEW', reasons=['INPUT_SCHEMA_INVALID'])
         else:
             routed = route_prepared(item, frozenset(seen))
+        if schema_errors:
+            routed['instrument_valuation_eligible'] = False
+            if receipt_errors[index]:
+                routed['reasons'] = tuple(routed.get('reasons', ())) + ('RECEIPT_SCHEMA_INVALID',)
         status = routed['status']
         chosen = routed.get('adapter')
         required = bool(routed.get('collection_required', False))

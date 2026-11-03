@@ -290,6 +290,26 @@
                 }
               }
             }
+          },
+          {
+            "if": {
+              "properties": {
+                "quality": {
+                  "properties": {
+                    "structure": {
+                      "const": "INVALID"
+                    }
+                  }
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "instrument_valuation_eligible": {
+                  "const": false
+                }
+              }
+            }
           }
         ]
       }

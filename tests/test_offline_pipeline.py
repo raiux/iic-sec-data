@@ -144,6 +144,51 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(len(result['collection_intents']),1)
             self.assertEqual(result['decisions'][0]['quality']['structure'],'INVALID')
 
+    def test_receipt_schema_invalid_never_enables_valuation(self):
+        for field in ('ratio', 'rights'):
+            for defect in ('compact_date', 'wrong_type', 'additional_field', 'terms_extra', 'proof_type'):
+                with self.subTest(field=field, defect=defect):
+                    r = receipt()
+                    r['instrument'].update(
+                        ratio=dict(decimal='2', identity=copy.deepcopy(r['issuer']['identity'])),
+                        rights=copy.deepcopy(r['issuer']['identity']))
+                    proof = (r['instrument']['ratio']['identity'] if field == 'ratio'
+                             else r['instrument']['rights'])
+                    if defect == 'compact_date':
+                        proof['checked_at'] = '20261103T000000Z'
+                    elif defect == 'wrong_type':
+                        proof['checked_at'] = 20261103
+                    elif defect == 'additional_field':
+                        proof['unexpected'] = 'fictional-extra'
+                    elif defect == 'terms_extra':
+                        r['instrument'][field]['unexpected_term'] = 'fictional-extra'
+                    elif field == 'ratio':
+                        r['instrument']['ratio']['identity'] = []
+                    else:
+                        r['instrument']['rights'] = []
+                    result = self.plan([r])
+                    decision = result['decisions'][0]
+                    self.assertEqual(decision['quality']['structure'], 'INVALID')
+                    self.assertFalse(decision['instrument_valuation_eligible'])
+                    self.assertTrue(decision['issuer_collection_eligible'])
+                    self.assertTrue(decision['collection_required'])
+                    self.assertEqual(len(result['collection_intents']), 1)
+                    self.assertTrue(any(error['path'].startswith('instrument/' + field)
+                                        for error in decision['schema_errors']))
+
+    def test_valid_receipt_requires_all_other_b1_gates(self):
+        r = receipt()
+        r['instrument'].update(
+            ratio=dict(decimal='2', identity=copy.deepcopy(r['issuer']['identity'])),
+            rights=copy.deepcopy(r['issuer']['identity']))
+        decision = self.plan([r])['decisions'][0]
+        self.assertEqual(decision['quality']['structure'], 'VALID')
+        self.assertTrue(decision['instrument_valuation_eligible'])
+        r['source']['official_check']['result'] = 'UNVERIFIED'
+        result = self.plan([r])
+        self.assertFalse(result['decisions'][0]['instrument_valuation_eligible'])
+        self.assertEqual(result['collection_intents'], [])
+
     def test_verified_decimal_never_float_in_output(self):
         r=receipt()
         r['instrument'].update(ratio={'decimal':'0.0000000000000000000123456789',
@@ -234,6 +279,13 @@ class PipelineTests(unittest.TestCase):
             validator('collection-plan.schema.json').validate(result)
         result=self.plan([record()])
         result['decisions'][0].update(status='EXCLUDED',issuer_collection_eligible=True)
+        with self.assertRaises(ValidationError):
+            validator('collection-plan.schema.json').validate(result)
+
+    def test_output_contract_forbids_invalid_structure_with_valuation(self):
+        result = self.plan([record()])
+        result['decisions'][0]['quality']['structure'] = 'INVALID'
+        self.assertTrue(result['decisions'][0]['instrument_valuation_eligible'])
         with self.assertRaises(ValidationError):
             validator('collection-plan.schema.json').validate(result)
 
