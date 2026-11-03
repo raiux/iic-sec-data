@@ -1,0 +1,25 @@
+name: B3-C1 integrated offline pipeline
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned free schema validation dependencies
+        run: python -m pip install -r requirements-validation.txt
+      - name: Compile integrated modules and tests
+        run: python -m compileall -q scripts tests
+      - name: Run full offline suite with network forbidden and no skips
+        run: python -m scripts.run_offline_tests
+      - name: Verify source snapshot remains unchanged
+        run: git diff --exit-code -- data tests/fixtures
