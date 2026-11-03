@@ -1,0 +1,21 @@
+name: B1 offline routing
+on:
+  pull_request:
+    paths:
+      - scripts/route_instrument.py
+      - tests/test_route_instrument.py
+      - .github/workflows/test-router.yml
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile scripts/route_instrument.py tests/test_route_instrument.py
+      - run: python -m unittest discover -s tests -v
