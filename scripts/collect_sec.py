@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Collect compact SEC XBRL facts for IIC; preserve verified per-company cache timestamps."""
 import json
+import copy
+import http.client
 import math
 import os
 import re
@@ -106,7 +108,7 @@ def request_json(url):
             time.sleep(2 ** attempt)
 
 
-def compact_facts(document, cik, *, downloaded=True):
+def compact_facts(document, cik, *, downloaded=True, require_financial=True):
     """Validate transport/identity and retain sourced candidates, NOT accounting approval.
 
     Keep revisions and conflicting values separately. No concept aggregation or FX.
@@ -166,13 +168,53 @@ def compact_facts(document, cik, *, downloaded=True):
                         units[unit] = eligible
                 if units:
                     result.setdefault(namespace, {})[tag] = {'units': units}
-    if not any(ns in result for ns in ('ifrs-full', 'us-gaap')):
+    if require_financial and not any(ns in result for ns in ('ifrs-full', 'us-gaap')):
         raise ValueError('No eligible financial facts')
     return result
 
 
+def recover_cache(cached, cik):
+    """Validate rows independently; malformed containers fail closed before any write.
+
+    Keep unselected historical concepts/periods untouched. Quarantine rejected rows
+    with their original payload and reason rather than silently discarding them.
+    """
+    recovered = copy.deepcopy(cached)
+    rejected = recovered.setdefault('rejected_observations', [])
+    if not isinstance(rejected, list) or not isinstance(recovered.get('facts'), dict):
+        raise ValueError('Unreadable cache structure; publication blocked')
+    for ns, concepts in recovered['facts'].items():
+        if not isinstance(concepts, dict):
+            raise ValueError('Unreadable cached namespace; publication blocked')
+        for tag, concept in concepts.items():
+            if not isinstance(concept, dict) or not isinstance(concept.get('units'), dict):
+                raise ValueError('Unreadable cached concept; publication blocked')
+            for unit, rows in concept['units'].items():
+                if not isinstance(rows, list):
+                    raise ValueError('Unreadable cached rows; publication blocked')
+                kept = []
+                for row in rows:
+                    try:
+                        compact_facts({'facts': {ns: {tag: {'units': {unit: [row]}}}}},
+                                      cik, downloaded=False, require_financial=False)
+                    except (ValueError, TypeError) as exc:
+                        rejected.append(dict(namespace=ns, concept=tag, unit=unit,
+                                             observation=row, reason=str(exc)))
+                    else:
+                        kept.append(row)
+                concept['units'][unit] = kept
+    # If nothing usable remains, abort rather than overwrite historical state.
+    compact_facts(recovered, cik, downloaded=False)
+    return recovered
+
+
 def collect(companies, previous):
-    old = {str(c.get('cik', '')).zfill(10): c for c in previous.get('companies', [])}
+    old = {}
+    for c in previous.get('companies', []):
+        cik = str(c.get('cik', '')).zfill(10)
+        if cik in old:
+            raise ValueError('Duplicate cached CIK; publication blocked')
+        old[cik] = recover_cache(c, cik)
     output = {'schema': 1, 'generated_at': now().isoformat(), 'companies': [], 'unavailable': []}
     blocked = False
     for company in companies:
@@ -180,13 +222,8 @@ def collect(companies, previous):
         if not re.fullmatch(r'\d{10}', cik):
             raise ValueError('Invalid configured CIK')
         cached = old.get(cik)
-        if cached:
-            try:
-                compact_facts(cached, cik, downloaded=False)
-            except ValueError:
-                cached = None
         stamp = parse_time(cached.get('fetched_at')) if cached else None
-        fresh = stamp is not None and timedelta(0) <= now() - stamp < CACHE_AGE
+        fresh = not (cached or {}).get('rejected_observations') and stamp is not None and timedelta(0) <= now() - stamp < CACHE_AGE
         source = f'https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json'
         if fresh:
             item = {**cached, **company, 'cik': cik, 'status': 'CACHE_FRESH'}
@@ -201,12 +238,25 @@ def collect(companies, previous):
                         for tag, concept in tags.items():
                             for unit, rows in concept['units'].items():
                                 incoming = facts.get(ns, {}).get(tag, {}).get('units', {}).get(unit, [])
-                                keys = {(r.get('start'), r['end'], r['accn'], r['val']) for r in incoming}
-                                if any((r.get('start'), r['end'], r['accn'], r['val']) not in keys for r in rows):
+                                keys = {json.dumps(r, sort_keys=True) for r in incoming}
+                                if any(json.dumps(r, sort_keys=True) not in keys for r in rows):
                                     raise ValueError('Incomplete or revised response: prior observation missing; review required')
-                item = dict(company, cik=cik, facts=facts, fetched_at=now().isoformat(),
+                if cached:
+                    # Preserve all historical provenance and unselected facts as well.
+                    merged = copy.deepcopy(cached['facts'])
+                    for ns, tags in facts.items():
+                        for tag, concept in tags.items():
+                            target = merged.setdefault(ns, {}).setdefault(tag, {'units': {}})
+                            for unit, rows in concept['units'].items():
+                                target_rows = target['units'].setdefault(unit, [])
+                                for row in rows:
+                                    if row not in target_rows:
+                                        target_rows.append(row)
+                    facts = merged
+                item = dict(cached or {}, **company)
+                item.update(cik=cik, facts=facts, fetched_at=now().isoformat(),
                             source_url=source, status='FETCHED', validation_status='CANDIDATE')
-            except (SecBlocked, urllib.error.URLError, TimeoutError, ConnectionError, ValueError) as exc:
+            except (SecBlocked, urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException, ValueError) as exc:
                 blocked = blocked or isinstance(exc, SecBlocked)
                 error = str(exc)
                 if cached:
@@ -217,8 +267,15 @@ def collect(companies, previous):
                     continue
         if item['status'] != 'STALE_RETAINED':
             item.pop('error', None)
-        item['validation_status'] = 'CANDIDATE'
+        item['collection_status'] = {'FETCHED': 'SUCCESS', 'CACHE_FRESH': 'NOT_REQUESTED',
+                                     'STALE_RETAINED': 'FAILED'}[item['status']]
+        item['data_status'] = 'NEW_AND_RETAINED' if item['status'] == 'FETCHED' and cached else (
+            'NEW' if item['status'] == 'FETCHED' else 'RETAINED')
+        item['cache_validation_status'] = 'PARTIALLY_REJECTED' if item.get('rejected_observations') else 'CANDIDATE'
+        item['validation_status'] = (cached or {}).get('validation_status', 'CANDIDATE') if item['status'] != 'FETCHED' else 'CANDIDATE'
         output['companies'].append(item)
+    configured = {str(c['cik']).zfill(10) for c in companies}
+    output['companies'].extend(c for cik, c in old.items() if cik not in configured)
     return output
 
 

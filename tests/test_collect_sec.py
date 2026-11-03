@@ -206,6 +206,75 @@ class SecTests(unittest.TestCase):
             output = sec.collect([dict(COMPANY)], cache(25))
         self.assertEqual(set(stored), set(output))
 
+    def test_partial_cache_retains_valid_rows_on_each_failure(self):
+        import copy
+        import http.client
+        for failure in [None, {}, self.error(403), self.error(429, '999999'),
+                        urllib.error.URLError('interrupted'),
+                        http.client.IncompleteRead(b'partial')]:
+            with self.subTest(failure=repr(failure)):
+                old = cache(25)
+                rows = old['companies'][0]['facts']['us-gaap']['Revenues']['units']['USD']
+                valid = dict(ROW, val=98, accn='0000000001-26-000002')
+                rows.extend([valid, dict(ROW, val='invalid')])
+                before = copy.deepcopy(old)
+                self.open.side_effect = failure if isinstance(failure, Exception) else (
+                    lambda *a, **k: io.BytesIO(json.dumps(failure).encode()))
+                result = sec.collect([COMPANY], old)['companies'][0]
+                self.assertEqual(result['facts']['us-gaap']['Revenues']['units']['USD'], [ROW, valid])
+                self.assertEqual(result['collection_status'], 'FAILED')
+                self.assertEqual(result['data_status'], 'RETAINED')
+                self.assertEqual(result['cache_validation_status'], 'PARTIALLY_REJECTED')
+                self.assertEqual(result['rejected_observations'][0]['observation']['val'], 'invalid')
+                self.assertEqual(result['fetched_at'], old['companies'][0]['fetched_at'])
+                self.assertEqual(old, before)
+
+    def test_mixed_invalid_download_retains_entire_history(self):
+        old = cache(25)
+        doc = document()
+        doc['facts']['us-gaap']['Revenues']['units']['USD'].extend([
+            dict(ROW, val=99, accn='0000000001-26-000002'), dict(ROW, val=None)])
+        with patch.object(sec, 'request_json', return_value=doc):
+            result = sec.collect([COMPANY], old)['companies'][0]
+        self.assertEqual(result['facts'], old['companies'][0]['facts'])
+        self.assertEqual(result['collection_status'], 'FAILED')
+
+    def test_provenance_change_blocks_replacement(self):
+        old = cache(25)
+        doc = document()
+        doc['facts']['us-gaap']['Revenues']['units']['USD'][0]['filed'] = '2026-03-02'
+        with patch.object(sec, 'request_json', return_value=doc):
+            result = sec.collect([COMPANY], old)['companies'][0]
+        self.assertEqual(result['facts'], old['companies'][0]['facts'])
+        self.assertEqual(result['status'], 'STALE_RETAINED')
+
+    def test_success_preserves_unselected_history_and_adds_new(self):
+        old = cache(25)
+        historical = dict(ROW, start='2025-10-01')
+        old['companies'][0]['facts']['us-gaap']['Revenues']['units']['USD'].append(historical)
+        doc = document()
+        new = dict(ROW, val=99, accn='0000000001-26-000002')
+        doc['facts']['us-gaap']['Revenues']['units']['USD'].append(new)
+        with patch.object(sec, 'request_json', return_value=doc):
+            result = sec.collect([COMPANY], old)['companies'][0]
+        self.assertEqual(result['facts']['us-gaap']['Revenues']['units']['USD'], [ROW, historical, new])
+        self.assertEqual(result['data_status'], 'NEW_AND_RETAINED')
+
+    def test_invalid_cache_container_blocks_publication(self):
+        old = cache(25)
+        old['companies'][0]['facts']['us-gaap']['Revenues']['units']['USD'] = None
+        with patch.object(sec, 'write_atomic') as write:
+            with self.assertRaises(ValueError):
+                sec.collect([COMPANY], old)
+        write.assert_not_called()
+
+    def test_empty_body_retains_cache(self):
+        self.open.side_effect = lambda *a, **k: io.BytesIO(b'')
+        old = cache(25)
+        result = sec.collect([COMPANY], old)['companies'][0]
+        self.assertEqual(result['facts'], old['companies'][0]['facts'])
+        self.assertEqual(result['collection_status'], 'FAILED')
+
 
 if __name__ == '__main__':
     unittest.main()

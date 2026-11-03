@@ -134,3 +134,40 @@ validation de référentiel monétaire. Le choix annuel exclut les exercices cou
 Prochaine étape : revue de cette PR par le coordinateur, décision sur la politique
 de publication du workflow et une CI SEC sur PR dans une mission distincte ; puis
 normalisation IFRS/US-GAAP et contrôles comptables sourcés. Aucune fusion automatique.
+
+## Complément bloquant PR #4 — 3 novembre 2026
+
+Défaut reproduit : un seul fait invalide invalidait le cache entier. Le cache
+est maintenant inspecté observation par observation ; les faits admissibles et
+leur provenance restent intacts, les rejets gardent leur payload et leur motif
+(`rejected_observations`). Un conteneur illisible ou un CIK dupliqué bloque toute
+publication. Un fichier JSON illisible bloque toujours avant écriture.
+Les réponses téléchargées restent validées strictement : un seul fait invalide,
+un historique manquant ou une provenance modifiée conserve le cache précédent.
+Les faits historiques hors sélection annuelle sont également conservés au succès.
+Les sociétés historiques hors configuration restent conservées.
+
+`collection_status` sépare SUCCESS / NOT_REQUESTED / FAILED ; `data_status`
+sépare NEW / NEW_AND_RETAINED / RETAINED ; `cache_validation_status` signale
+PARTIALLY_REJECTED. Le statut de validation antérieur reste conservé sur échec.
+CANDIDATE reste une admissibilité structurelle, sans validation comptable.
+
+Vérifications locales Python 3.12.14 :
+- `python -m unittest discover -s tests -p 'test_*.py' -q` : 53 tests OK.
+- `python -m unittest discover -s tests -p 'test_collect_sec.py' -q` : 22 tests OK.
+- Suite initiale isolée par unittest (exclusion du module test_collect_sec,
+  assertion countTestCases()==31) : 31 tests OK.
+- `python -m py_compile scripts/collect_sec.py tests/test_collect_sec.py` : OK.
+- `python -m compileall -q scripts tests` et `git diff --check` : OK.
+
+Nouveaux cas : cache contenant plusieurs observations valides et une invalide,
+réponse mixte invalide, réponse vide, 403, 429, URLError, IncompleteRead,
+changement de provenance, préservation d'historique hors sélection. Le test
+existant d'échec Path.replace vérifie les octets du fichier original et le
+nettoyage temporaire. Aucune donnée publiée modifiée.
+
+Ajout de test-sec-pr.yml : tests SEC, suite complète et compilation sur PR,
+sans secret, sans collecte réelle, permissions contents:read. Sa présence
+n'est pas une preuve d'exécution CI ; consulter le run associé au commit.
+Aucun appel SEC réel effectué : Cameco IFRS et Microsoft US-GAAP restent
+non vérifiés en ligne. Le workflow existant de collecte/publication est inchangé.
