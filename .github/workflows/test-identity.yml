@@ -1,0 +1,48 @@
+name: B2 offline identity ingestion
+on:
+  pull_request:
+    paths:
+      - scripts/ingest_identity.py
+      - tests/test_ingest_identity.py
+      - tests/fixtures/identity-fictional.json
+      - schemas/identity-input.schema.json
+      - .github/workflows/test-identity.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  standalone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v
+      - run: python -m py_compile scripts/ingest_identity.py tests/test_ingest_identity.py
+      - run: python -m json.tool schemas/identity-input.schema.json > /dev/null
+  pinned-b1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: raiux/iic-sec-data
+          ref: 5d551e02bda63842626d0e7a68fe747d5bbccbec
+          path: dependency-b1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: All local tests with pinned B1 dependency
+        env:
+          PYTHONPATH: ${{ github.workspace }}/dependency-b1
+        run: python -m unittest discover -s tests -v
+      - name: B1 tests as well
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/dependency-b1
+        run: python -m unittest discover -s dependency-b1/tests -p test_route_instrument.py -v
