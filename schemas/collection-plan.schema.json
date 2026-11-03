@@ -1,0 +1,370 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "mode",
+    "as_of",
+    "status",
+    "decisions",
+    "collection_intents",
+    "issues",
+    "source_verification"
+  ],
+  "properties": {
+    "schema_version": {
+      "enum": [
+        "iic.collection-plan.v1"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "OFFLINE_SIMULATION"
+      ]
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "enum": [
+        "PLANNED",
+        "REJECTED"
+      ]
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "input_index",
+          "identity",
+          "status",
+          "reasons",
+          "proposed_adapter",
+          "adapter",
+          "issuer_collection_eligible",
+          "instrument_valuation_eligible",
+          "collection_required",
+          "collection_key",
+          "missing_fields",
+          "quality",
+          "schema_errors",
+          "provenance"
+        ],
+        "properties": {
+          "input_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "identity": {
+            "type": "object",
+            "required": [
+              "issuer_id",
+              "instrument_id",
+              "listing_id"
+            ],
+            "properties": {
+              "issuer_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "instrument_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "listing_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "status": {
+            "enum": [
+              "ROUTABLE",
+              "EXCLUDED",
+              "NEEDS_REVIEW",
+              "UNVERIFIED",
+              "BLOCKED",
+              "ARCHIVED",
+              "DEPENDENCY_BLOCKED"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "proposed_adapter": {
+            "enum": [
+              null,
+              "SEC_COMPANYFACTS",
+              "ESEF",
+              "ISSUER_REPORT",
+              "SEDAR_PLUS"
+            ]
+          },
+          "adapter": {
+            "enum": [
+              null,
+              "SEC_COMPANYFACTS",
+              "ESEF"
+            ]
+          },
+          "issuer_collection_eligible": {
+            "type": "boolean"
+          },
+          "instrument_valuation_eligible": {
+            "type": "boolean"
+          },
+          "collection_required": {
+            "type": "boolean"
+          },
+          "collection_key": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "enum": [
+                      "SEC_COMPANYFACTS",
+                      "ESEF"
+                    ]
+                  }
+                ],
+                "minItems": 2,
+                "maxItems": 2
+              }
+            ]
+          },
+          "missing_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "quality": {
+            "type": "object",
+            "required": [
+              "structure",
+              "accounting",
+              "source"
+            ],
+            "properties": {
+              "structure": {
+                "enum": [
+                  "VALID",
+                  "INVALID"
+                ]
+              },
+              "accounting": {
+                "enum": [
+                  "NOT_PERFORMED"
+                ]
+              },
+              "source": {
+                "enum": [
+                  "CALLER_ASSERTIONS_ONLY"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "schema_errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "rule"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "rule": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "role",
+                "ref",
+                "checked_at",
+                "result"
+              ],
+              "properties": {
+                "role": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                },
+                "checked_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "result": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "not": {
+                    "const": "ROUTABLE"
+                  }
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "issuer_collection_eligible": {
+                  "const": false
+                },
+                "instrument_valuation_eligible": {
+                  "const": false
+                },
+                "collection_required": {
+                  "const": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "ROUTABLE"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "issuer_collection_eligible": {
+                  "const": true
+                },
+                "adapter": {
+                  "enum": [
+                    "SEC_COMPANYFACTS",
+                    "ESEF"
+                  ]
+                },
+                "collection_key": {
+                  "type": "array"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "collection_intents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "issuer_id",
+          "adapter",
+          "state",
+          "input_indices"
+        ],
+        "properties": {
+          "issuer_id": {
+            "type": "string"
+          },
+          "adapter": {
+            "enum": [
+              "SEC_COMPANYFACTS",
+              "ESEF"
+            ]
+          },
+          "state": {
+            "enum": [
+              "SIMULATED"
+            ]
+          },
+          "input_indices": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "source_verification": {
+      "enum": [
+        "NOT_PERFORMED"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IIC offline collection intentions v1",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "REJECTED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "decisions": {
+            "maxItems": 0
+          },
+          "collection_intents": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
+}
