@@ -38,7 +38,7 @@ Les statuts s'appliquent à une capacité précise. AVAILABLE signifie que l'art
 | Cotation · listing_id interne | instrument_id, ticker exact, MIC, pays de cotation, trading_currency, statut ACTIVE/DELISTED/UNKNOWN, valid_from/to. Ticker+MIC daté désigne une cotation, jamais une société à lui seul. |
 | Preuve et décision | source_url, source_record_id, checked_at, validation_status VERIFIED/NEEDS_REVIEW/CONFLICT, missing_fields et reason_codes. Un champ non documenté reste inconnu ; pas de déduction à partir d'un suffixe boursier. |
 
-Deux places peuvent partager un titre ; deux classes du même émetteur restent deux titres. Une réutilisation du ticker après radiation crée une nouvelle relation datée. Un doublon exact se déduplique avec ses preuves ; divergence de classe, d'ISIN ou de dates → NEEDS_REVIEW. Après restructuration, relier prédécesseur/successeur avec date et source sans réécrire l'historique. Un ADR est un instrument distinct : référencer dépositaire, sous-jacent, ratio et dates vérifiés. Conserver les observations de l'émetteur une seule fois. Par défaut le périmètre action ordinaire exclut la valorisation de l'ADR ; un ratio absent interdit tout calcul par reçu.
+Deux places peuvent partager un titre ; deux classes du même émetteur restent deux titres. Une réutilisation du ticker après radiation crée une nouvelle relation datée. Un doublon exact se déduplique avec ses preuves ; divergence de classe, d'ISIN ou de dates → NEEDS_REVIEW. Après restructuration, relier prédécesseur/successeur avec date et source sans réécrire l'historique. Un ADR est un instrument distinct : référencer dépositaire, sous-jacent, ratio et dates vérifiés. Conserver les observations de l'émetteur une seule fois. Si le sous-jacent est identifié et la route vérifiée, l’ADR permet la collecte des comptes de cet émetteur. Pour valoriser par reçu il faut en plus le ratio positif (actions sous-jacentes par reçu), les droits et leur preuve datée. L’éligibilité instrument ne valide aucune méthode financière.
 
 ## Contrat de décision avant tout appel financier
 
@@ -46,10 +46,12 @@ Deux places peuvent partager un titre ; deux classes du même émetteur restent 
 |---|---|---|
 | 1 | ETF, ETN ou fonds | EXCLUDED avec motif et preuve ; zéro requête et zéro valorisation, même si un CIK existe. |
 | 2 | UNKNOWN, données contradictoires, ticker ambigu, type ou lien émetteur non vérifié | NEEDS_REVIEW ; aucune résolution heuristique ni appel. |
-| 3 | Radiation, ADR ou autre type hors périmètre | ARCHIVED pour titre radié, historique conservé ; ADR référencé séparément, hors valorisation ordinaire. Aucun appel au titre. |
-| 4 | Action ordinaire active identifiée, CIK et dépôt financier applicable vérifiés | SEC_COMPANYFACTS, choix de taxonomie depuis le dépôt, pas depuis le pays. Clé de collecte = émetteur + source ; déduplication entre cotations. |
+| 3 | Radiation ou autre type hors périmètre | ARCHIVED pour titre radié ; historique conservé. |
+| 4 | Action ordinaire active ou ADR rattaché à son sous-jacent ; CIK, dépôt XBRL de cet émetteur, taxonomie us-gaap/ifrs-full et disponibilité CompanyFacts vérifiés | SEC_COMPANYFACTS, choix de taxonomie depuis le dépôt, pas depuis le pays. Clé de collecte = émetteur + source ; déduplication entre cotations. |
 | 5 | Sinon dépôt ESEF officiel accessible et identité vérifiée | ESEF avec package officiel et éventuelle conversion traçable. |
 | 6 | Sinon publication officielle gratuite, droit d'accès machine et provenance démontrés | Route ISSUER_REPORT seulement pour un adaptateur approuvé ; sinon UNVERIFIED/BLOCKED, raison et liste des champs manquants. |
+
+B1 sépare proposed_adapter (piste) de adapter (source vérifiée). CIK seul, dépôt sans XBRL, taxonomie inéligible ou accès CompanyFacts non démontré → UNVERIFIED, aucun appel. Source interdite → BLOCKED ; aucune substitution automatique, y compris pour le Canada hors SEC. issuer_collection_eligible autorise une collecte unique par émetteur/source ; si la clé est déjà traitée, collection_required est faux. instrument_valuation_eligible concerne seulement le titre : pour un ADR sans ratio/droits vérifiés il reste faux même si les comptes sont collectés. ADR sans émetteur identifié → NEEDS_REVIEW. ETF/ETN/FUND → deux indicateurs faux avant toute inspection de source.
 
 Sortie pure du routeur : instrument_id, issuer_id, decision, adapter nullable, reason_codes, evidence_refs, missing_fields. Une panne d'une source n'autorise pas une substitution silencieuse. Une seconde source fournit une observation distincte à rapprocher.
 
