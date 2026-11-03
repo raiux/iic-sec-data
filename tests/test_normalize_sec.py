@@ -80,6 +80,26 @@ class SecNormalizationTests(unittest.TestCase):
             self.assertFalse(group['valuation_usable'])
             self.assertEqual(len(group['amendment_candidates']),int(expected=='CONFLICT'))
 
+    def test_currency_codes_and_share_units_are_metric_specific(self):
+        for concept, unit, eligible in (
+            ('Revenues', 'USD', True), ('Revenues', 'CAD', True),
+            ('Revenues', 'XYZ', False), ('Revenues', 'XXX', False),
+            ('Revenues', 'XAU', False), ('Revenues', 'shares', False),
+            ('WeightedAverageNumberOfDilutedSharesOutstanding', 'USD', False),
+            ('WeightedAverageNumberOfDilutedSharesOutstanding', 'shares', True),
+        ):
+            with self.subTest(concept=concept, unit=unit):
+                raw = fixture()
+                raw['companies'][0]['facts']['us-gaap'] = {concept: {'units': {unit: [ROW]}}}
+                result = run(raw)
+                observation = result['observations'][0]
+                self.assertEqual(observation['structure'], 'CANDIDATE' if eligible else 'OUT_OF_SCOPE')
+                self.assertEqual(observation['reasons'], [] if eligible else ['UNIT_OUT_OF_SCOPE'])
+                self.assertEqual(result['raw_document'], json.dumps(raw))
+                self.assertTrue(observation['raw_pointer'].endswith('/units/' + unit + '/0'))
+                self.assertEqual(observation['accounting_validation'], 'UNCHECKED')
+                self.assertFalse(observation['valuation_usable'])
+
     def test_units_and_debt_definitions_distinct(self):
         raw=fixture()
         raw['companies'][0]['facts']['us-gaap']['Revenues']['units']['shares']=[dict(ROW)]

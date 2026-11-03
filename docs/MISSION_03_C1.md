@@ -125,3 +125,15 @@ si B3 est intégrée ultérieurement ; C1 lui-même utilise la bibliothèque sta
 
 Ce premier incrément ne termine pas la recette C1 complète. ESEF/VINCI reste
 l'étape C2 ; aucune donnée IFRS/US-GAAP manquante n'est inventée.
+
+
+### Unités monétaires du pilote
+
+La liste hors ligne est extraite du jeu ISO 4217 de pycountry, objet Git
+`9f41243f4a15bbc8f4963f32d98ee371e7fe415d`
+([source figée](https://api.github.com/repos/pycountry/pycountry/git/blobs/9f41243f4a15bbc8f4963f32d98ee371e7fe415d)).
+Le pilote exclut les unités de fonds ou de compte BOV, CHE, CHW, CLF, COU,
+MXV, USN, UYI, UYW, XAD, XBA–XBD, XDR, XSU, XUA, les métaux XAG, XAU,
+XPD, XPT et les codes spéciaux XTS, XXX. Il vérifie l'appartenance à cette
+version, pas la validité historique à la date du dépôt ni la devise déclarée
+par l'émetteur. Une unité hors périmètre reste dans le document source.
