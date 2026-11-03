@@ -1,0 +1,7 @@
+# Mission 05 — C2, validation comptable officielle SEC (Microsoft et Cameco)
+
+Mission publique hors réseau, sans secret ni donnée personnelle. Branche dédiée issue de main. Reprendre par intégration contrôlée les changements validés de PR #12 (B3→C1), sans travailler sur sa branche et sans fusion automatique.
+
+Objectif : rendre les observations normalisées vérifiables par rapprochement aux dépôts SEC officiels (références documentaires, accession, dates, exercices, unités, taxonomy, scope et dimensions), sans inventer ni sélectionner arbitrairement des valeurs. Distinguer données de fixture et données officielles effectivement vérifiées. Microsoft US-GAAP et Cameco IFRS servent de cas d'essai, avec preuve explicite des sources, ou blocage contrôlé si aucune preuve fiable n'est disponible hors réseau.
+
+Critères : vérifier flux consolidés, attribution du résultat à la société mère, cohérence exercice/période et amendements, USD/CAD/shares, conflits et données manquantes ; conserver raw, SHA256, pointeurs, source locator et PRIVATE. Un état VERIFIED ne peut être émis que si toutes les preuves indépendantes sont disponibles et testées ; sinon UNCHECKED et valuation_usable=false. Ne jamais calculer une juste valeur sur des chiffres non vérifiés. Préserver B1/B2/B3/C1 et V4. Tests intégrés et CI sur un checkout unique, sans skip, avec fixtures fictives et cas négatifs. Aucun réseau non autorisé, API payante, ETF collecteur actions, donnée financière inventée, secret ni publication de données privées. Pas de fusion dans main.
