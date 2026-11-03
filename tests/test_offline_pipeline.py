@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from jsonschema import ValidationError, SchemaError
-from scripts.offline_pipeline import build_plan, canonical_json, validator, BASE
+from scripts.offline_pipeline import build_plan, canonical_json, validator, BASE, PublicExportBlocked
 
 CLOCK = datetime(2026, 11, 3, tzinfo=timezone.utc)
 FIXTURE = json.loads((BASE / 'tests/fixtures/identity-fictional.json').read_text())[0]
@@ -52,6 +52,62 @@ class PipelineTests(unittest.TestCase):
             with patch('scripts.offline_pipeline.BASE', Path(directory)):
                 with self.assertRaises(SchemaError):
                     validator('bad.json')
+
+    def test_non_string_schema_references_are_controlled(self):
+        for key in ('$ref', '$dynamicRef'):
+            for value in (None, 42, True, [], {}):
+                with self.subTest(key=key, value=value), tempfile.TemporaryDirectory() as directory:
+                    Path(directory, 'schemas').mkdir()
+                    Path(directory, 'schemas/bad.json').write_text(json.dumps(
+                        {'properties': {'nested': {key: value}}}))
+                    with patch('scripts.offline_pipeline.BASE', Path(directory)):
+                        with self.assertRaisesRegex(ValueError, 'Schema reference must be a string'):
+                            validator('bad.json')
+
+    def test_sensitive_markers_remain_private_and_public_export_is_blocked(self):
+        marker = 'FICTITIOUS_PRIVATE_MARKER_DO_NOT_EXPORT'
+        mutations = [('reference',), ('issuer-proof',), ('filing',), ('issuer-id',),
+                     ('instrument-id',), ('listing-id',)]
+        for mutation in mutations:
+            with self.subTest(mutation=mutation):
+                r = record()
+                if mutation == ('reference',):
+                    r['source']['reference'] = marker
+                elif mutation == ('issuer-proof',):
+                    r['issuer']['identity']['ref'] = marker
+                elif mutation == ('filing',):
+                    r['source']['filing']['ref'] = marker
+                elif mutation == ('issuer-id',):
+                    r['issuer']['id'] = marker
+                    r['instrument']['issuer_id'] = marker
+                    r['source']['issuer_id'] = marker
+                elif mutation == ('instrument-id',):
+                    r['instrument']['id'] = marker
+                    r['listing']['instrument_id'] = marker
+                else:
+                    r['listing']['id'] = marker
+                validator('identity-input.schema.json').validate([r])
+                result = self.plan([r])
+                self.assertEqual(result['visibility'], 'PRIVATE')
+                self.assertIn(marker, canonical_json(result))  # Private audit remains complete.
+                with self.assertRaises(PublicExportBlocked) as blocked:
+                    canonical_json(result, audience='public')
+                self.assertNotIn(marker, str(blocked.exception))
+
+    def test_cli_public_export_has_no_output_or_private_diagnostic(self):
+        marker = 'FICTITIOUS_PRIVATE_MARKER_DO_NOT_EXPORT'
+        r = record()
+        r['source']['reference'] = marker
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory, 'private.json')
+            source.write_text(json.dumps([r]))
+            command = [sys.executable, '-m', 'scripts.offline_pipeline', '--input', str(source),
+                       '--as-of', '2026-11-03T00:00:00Z', '--audience', 'public']
+            result = subprocess.run(command, cwd=BASE, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, '')
+        self.assertIn('Public export blocked', result.stderr)
+        self.assertNotIn(marker, result.stderr)
 
     def test_remote_schema_references_forbidden(self):
         with tempfile.TemporaryDirectory() as directory:

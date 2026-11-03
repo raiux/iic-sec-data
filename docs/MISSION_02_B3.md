@@ -51,6 +51,7 @@ iic.collection-plan.v1 avec les champs suivants.
 
 | Champ | Signification |
 |---|---|
+| visibility, export_policy | PRIVATE et SEPARATE_PUBLIC_PROJECTION_REQUIRED |
 | mode, source_verification | OFFLINE_SIMULATION et NOT_PERFORMED |
 | as_of | Date UTC normalisée du rejeu |
 | status, issues | PLANNED ou REJECTED ; motifs génériques pour JSON inexploitable |
@@ -85,19 +86,40 @@ et reçus rattachés sont associés à cette intention. Les champs de valorisati
 ne valent que pour la porte d'entrée du titre. Aucune observation comptable,
 valeur financière ou valorisation n'est ajoutée à la sortie.
 
-## Confidentialité
+## Contrat privé et frontière d'export
 
-Les fixtures utilisées sont explicitement fictives. Les snapshots financiers
-existants ne sont pas réécrits. Le schéma de sortie refuse les propriétés
-inattendues et la projection n'exporte pas les objets de référentiel bruts.
-Les tests injectent des champs de position, coût d'achat ou secret hors schéma
-et vérifient l'absence de leurs valeurs dans la sortie.
+La sortie de build_plan et de la CLI est **privée par défaut**. Elle contient
+visibility=PRIVATE et export_policy=SEPARATE_PUBLIC_PROJECTION_REQUIRED,
+imposés par le schéma de sortie. Les références et les IDs peuvent contenir
+du texte sensible même si le JSON est structurellement valide. La projection
+des champs reconnus est un format d'audit privé ; elle n'est pas une garantie
+de publication publique.
 
-Ce contrôle n'établit pas que tout texte arbitraire est public. Les références
-et identifiants fournis sont des champs textuels autorisés ; le fournisseur
-doit y placer uniquement des preuves publiques. Le contrat n'autorise aucune
-publication d'une sélection privée. Le point d'entrée écrit sur stdout et
-n'effectue aucune publication ni écriture des données du dépôt.
+canonical_json(plan) conserve les références et identifiants complets pour
+l'audit privé. canonical_json(plan, audience='public') lève PublicExportBlocked.
+La CLI propose --audience private (défaut) et refuse --audience public avec
+un code de sortie non nul, sans JSON sur stdout et sans recopier les valeurs
+soumises dans l'erreur. Aucun mécanisme d'export public n'est activé dans B3.
+La sérialisation privée et une redirection shell restent capables de produire
+un fichier privé : ce contrôle d'API ne peut pas empêcher sa publication
+manuelle par un autre logiciel.
+
+Une publication publique nécessite une **étape distincte, implémentée et revue**.
+Son contrat devra partir d'un univers public expressément autorisé, résoudre
+les clés privées vers des identités publiques approuvées et n'émettre que
+des références exactes inscrites dans un registre public vérifié, avec source,
+date et décision de revue indépendantes des assertions de l'appelant.
+Référence ou ID absent de cette allowlist, preuve manquante ou sélection privée
+non autorisée : export bloqué. La provenance complète reste dans le contexte
+privé. Cette étape ne consiste ni à remplacer un indicateur PRIVATE par PUBLIC,
+ni à masquer du texte avec une regex générique. Aucun algorithme de détection
+de secrets universel n'est revendiqué.
+
+Les tests injectent un marqueur sensible fictif dans source.reference,
+filing.ref, issuer.identity.ref et les trois niveaux d'IDs. Les entrées restent
+conformes au schéma d'entrée. Le marqueur est conservé en sortie privée, tandis
+que l'export public API est bloqué et la CLI publique ne restitue aucune valeur.
+Les fixtures du dépôt restent fictives et les snapshots restent inchangés.
 
 ## Recette exécutée et CI
 
@@ -109,8 +131,8 @@ git diff --check
 git diff --exit-code -- data tests/fixtures
 ```
 
-100 tests réussissent, sans omission, dont les 83 tests présents à la base.
-Les 17 tests B3 couvrent le méta-schéma, des dates impossibles, des références
+103 tests réussissent, sans omission, dont les 83 tests présents à la base.
+Les 20 tests B3 couvrent le méta-schéma, des dates impossibles, des références
 externes interdites, l'entrée CLI, la répétabilité octet pour octet, les portes
 de routage, les collisions, l'ADR, les preuves, la confidentialité et les
 contraintes du schéma de sortie. Les tests fonctionnels rendent l'appel SEC
@@ -141,3 +163,11 @@ et de leur provenance. Toute panne ou interdiction gardera son statut explicite.
 La normalisation IFRS/US-GAAP, les conversions monétaires et la validation
 comptable relèvent des étapes C approuvées. Aucune de ces opérations réelles
 n'a été exécutée pendant B3.
+
+## Correctif de revue après bb3829c
+
+Les refs non textuelles ($ref et $dynamicRef avec null, entier, booléen, liste
+ou objet) sont rejetées par ValueError avant startswith. Les références
+externes restent interdites. Trois tests supplémentaires couvrent ce cas
+et la frontière d'export. Les sorties privées conservent leurs assertions
+originelles, sans publier de nouveau JSON d'exemple contenant les marqueurs.

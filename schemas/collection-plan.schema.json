@@ -8,7 +8,9 @@
     "decisions",
     "collection_intents",
     "issues",
-    "source_verification"
+    "source_verification",
+    "visibility",
+    "export_policy"
   ],
   "properties": {
     "schema_version": {
@@ -341,11 +343,17 @@
       "enum": [
         "NOT_PERFORMED"
       ]
+    },
+    "visibility": {
+      "const": "PRIVATE"
+    },
+    "export_policy": {
+      "const": "SEPARATE_PUBLIC_PROJECTION_REQUIRED"
     }
   },
   "additionalProperties": false,
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "IIC offline collection intentions v1",
+  "title": "IIC private offline collection intentions v1",
   "allOf": [
     {
       "if": {

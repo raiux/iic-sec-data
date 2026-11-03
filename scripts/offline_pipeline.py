@@ -1,4 +1,4 @@
-"""B3: deterministic public planning envelope. All intentions remain simulated."""
+"""B3: private planning envelope. Public export requires a separate reviewed projection."""
 import argparse
 import json
 from datetime import datetime, timezone
@@ -8,8 +8,9 @@ from jsonschema import Draft202012Validator, FormatChecker
 from scripts.ingest_identity import load_json, reconcile, route_prepared
 
 BASE = Path(__file__).resolve().parents[1]
-STATUSES = {'ROUTABLE', 'EXCLUDED', 'NEEDS_REVIEW', 'UNVERIFIED', 'BLOCKED',
-            'ARCHIVED', 'DEPENDENCY_BLOCKED'}
+
+class PublicExportBlocked(ValueError):
+    """No public projection or verified public-reference allowlist exists in B3."""
 
 
 def validator(name):
@@ -18,8 +19,11 @@ def validator(name):
     def local_only(node):
         if isinstance(node, dict):
             for key, value in node.items():
-                if key in {'$ref', '$dynamicRef'} and not value.startswith('#'):
-                    raise ValueError('Remote schema references are forbidden')
+                if key in {'$ref', '$dynamicRef'}:
+                    if not isinstance(value, str):
+                        raise ValueError('Schema reference must be a string')
+                    if not value.startswith('#'):
+                        raise ValueError('Remote schema references are forbidden')
                 local_only(value)
         elif isinstance(node, list):
             for value in node:
@@ -82,7 +86,7 @@ def unresolved_fields(record):
 
 
 def provenance(record):
-    """Export only recognized evidence fields, never arbitrary record dictionaries."""
+    """Preserve recognized assertions for private audit; contents may be sensitive."""
     if not isinstance(record, dict):
         return []
     items = []
@@ -139,6 +143,7 @@ def build_plan(payload, *, as_of):
     output_validator = validator('collection-plan.schema.json')
     records, parse_error = load_json(payload)
     envelope = dict(schema_version='iic.collection-plan.v1', mode='OFFLINE_SIMULATION',
+                    visibility='PRIVATE', export_policy='SEPARATE_PUBLIC_PROJECTION_REQUIRED',
                     as_of=as_of.astimezone(timezone.utc).isoformat(),
                     status='PLANNED', decisions=[], collection_intents=[],
                     issues=[], source_verification='NOT_PERFORMED')
@@ -199,7 +204,10 @@ def build_plan(payload, *, as_of):
     return envelope
 
 
-def canonical_json(document):
+def canonical_json(document, *, audience='private'):
+    """Private serialization only; no heuristic can certify arbitrary reference text."""
+    if audience != 'private':
+        raise PublicExportBlocked('Public export requires a separate reviewed projection')
     return json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n'
 
 
@@ -207,13 +215,21 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', required=True)
     parser.add_argument('--as-of', required=True, help='Aware ISO datetime, fixed for replay')
+    parser.add_argument('--audience', choices=('private', 'public'), default='private',
+                        help='Private by default; public export is currently blocked')
     args = parser.parse_args()
     try:
         as_of = datetime.fromisoformat(args.as_of.replace('Z', '+00:00'))
+        # Refuse publication before reading potentially private input.
+        if args.audience == 'public':
+            raise PublicExportBlocked('Public export requires a separate reviewed projection')
         result = build_plan(Path(args.input).read_text(encoding='utf-8'), as_of=as_of)
+        serialized = canonical_json(result, audience=args.audience)
+    except PublicExportBlocked:
+        parser.error('Public export blocked: a separate reviewed projection is required')
     except (ValueError, OSError):
         parser.error('Unreadable input, invalid as-of or invalid local schema')
-    print(canonical_json(result), end='')
+    print(serialized, end='')
 
 
 if __name__ == '__main__':
