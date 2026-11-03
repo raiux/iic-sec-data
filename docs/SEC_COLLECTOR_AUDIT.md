@@ -171,3 +171,37 @@ sans secret, sans collecte réelle, permissions contents:read. Sa présence
 n'est pas une preuve d'exécution CI ; consulter le run associé au commit.
 Aucun appel SEC réel effectué : Cameco IFRS et Microsoft US-GAAP restent
 non vérifiés en ligne. Le workflow existant de collecte/publication est inchangé.
+
+## Revue complémentaire : filtres sans exception — 3 novembre 2026
+
+La CI du commit f479585 ne couvrait pas le retour vide de compact_facts.
+Correction : recover_cache exige maintenant un résultat non vide pour chaque
+observation d'un concept configuré. Sinon la ligne quitte les faits candidats
+et reste intégralement dans rejected_observations, avec namespace, concept,
+unité et motif explicite d'exclusion par les filtres. Cela s'applique aux
+formulaires non annuels (8-K), périodes partielles, dimensions/segments et unités
+inadmissibles. La ligne annuelle valide et tous ses champs de provenance sont
+conservés sans mutation du cache d'entrée. La récupération répétée est idempotente.
+
+Cette règle remplace la conservation antérieure des périodes hors sélection dans
+les faits actifs : leur payload historique est conservé en quarantaine, pas perdu.
+Les concepts/espaces de noms hors TAGS suivent une règle distincte : conservés
+verbatim dans facts, listés dans historical_concepts avec NOT_EVALUATED ; ils ne
+sont ni validés implicitement ni utilisés par compact_facts. Un consommateur ne
+doit donc pas interpréter le statut de l'entreprise comme validant ces concepts.
+Sans aucun fait financier configuré admissible, la publication reste bloquée.
+
+Tests ajoutés : annuel valide + 8-K, période de 90 jours, dimensions, segment,
+unité shares interdite ; vérification exacte de la quarantaine, du motif, de la
+provenance, de l'absence de mutation et de l'idempotence. Concepts hors TAGS
+et espace de noms personnalisé conservés au succès comme sur échec.
+Le test de succès antérieur concernant la période partielle vérifie désormais
+sa quarantaine, conformément au contrat corrigé.
+
+Python 3.12.14 :
+- python -m unittest discover -s tests -p 'test_*.py' -q : 55 tests OK.
+- python -m unittest discover -s tests -p 'test_collect_sec.py' -q : 24 tests OK.
+- python -m compileall -q scripts tests : OK.
+- git diff --check : OK.
+Aucun changement du workflow, des JSON publiés ou des moteurs financiers.
+Aucun appel SEC réel : Cameco IFRS/Microsoft US-GAAP restent non vérifiés en ligne.

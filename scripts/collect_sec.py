@@ -176,33 +176,44 @@ def compact_facts(document, cik, *, downloaded=True, require_financial=True):
 def recover_cache(cached, cik):
     """Validate rows independently; malformed containers fail closed before any write.
 
-    Keep unselected historical concepts/periods untouched. Quarantine rejected rows
+    Keep unknown historical concepts untouched and explicitly unevaluated. Quarantine rejected rows
     with their original payload and reason rather than silently discarding them.
     """
     recovered = copy.deepcopy(cached)
     rejected = recovered.setdefault('rejected_observations', [])
     if not isinstance(rejected, list) or not isinstance(recovered.get('facts'), dict):
         raise ValueError('Unreadable cache structure; publication blocked')
+    historical = []
     for ns, concepts in recovered['facts'].items():
         if not isinstance(concepts, dict):
             raise ValueError('Unreadable cached namespace; publication blocked')
         for tag, concept in concepts.items():
             if not isinstance(concept, dict) or not isinstance(concept.get('units'), dict):
                 raise ValueError('Unreadable cached concept; publication blocked')
+            selected = any(tag in tags for tags in TAGS.get(ns, {}).values())
+            if not selected:
+                historical.append(dict(namespace=ns, concept=tag,
+                                       validation_status='NOT_EVALUATED',
+                                       reason='Historical concept outside configured TAGS; preserved verbatim'))
+                continue
             for unit, rows in concept['units'].items():
                 if not isinstance(rows, list):
                     raise ValueError('Unreadable cached rows; publication blocked')
                 kept = []
                 for row in rows:
                     try:
-                        compact_facts({'facts': {ns: {tag: {'units': {unit: [row]}}}}},
-                                      cik, downloaded=False, require_financial=False)
+                        accepted = compact_facts(
+                            {'facts': {ns: {tag: {'units': {unit: [row]}}}}},
+                            cik, downloaded=False, require_financial=False)
+                        if not accepted:
+                            raise ValueError('Excluded by configured form, period, dimensions or unit filters')
                     except (ValueError, TypeError) as exc:
                         rejected.append(dict(namespace=ns, concept=tag, unit=unit,
                                              observation=row, reason=str(exc)))
                     else:
                         kept.append(row)
                 concept['units'][unit] = kept
+    recovered['historical_concepts'] = historical
     # If nothing usable remains, abort rather than overwrite historical state.
     compact_facts(recovered, cik, downloaded=False)
     return recovered

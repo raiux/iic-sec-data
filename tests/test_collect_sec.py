@@ -248,7 +248,7 @@ class SecTests(unittest.TestCase):
         self.assertEqual(result['facts'], old['companies'][0]['facts'])
         self.assertEqual(result['status'], 'STALE_RETAINED')
 
-    def test_success_preserves_unselected_history_and_adds_new(self):
+    def test_success_quarantines_partial_history_and_adds_new(self):
         old = cache(25)
         historical = dict(ROW, start='2025-10-01')
         old['companies'][0]['facts']['us-gaap']['Revenues']['units']['USD'].append(historical)
@@ -257,7 +257,8 @@ class SecTests(unittest.TestCase):
         doc['facts']['us-gaap']['Revenues']['units']['USD'].append(new)
         with patch.object(sec, 'request_json', return_value=doc):
             result = sec.collect([COMPANY], old)['companies'][0]
-        self.assertEqual(result['facts']['us-gaap']['Revenues']['units']['USD'], [ROW, historical, new])
+        self.assertEqual(result['facts']['us-gaap']['Revenues']['units']['USD'], [ROW, new])
+        self.assertEqual(result['rejected_observations'][0]['observation'], historical)
         self.assertEqual(result['data_status'], 'NEW_AND_RETAINED')
 
     def test_invalid_cache_container_blocks_publication(self):
@@ -274,6 +275,50 @@ class SecTests(unittest.TestCase):
         result = sec.collect([COMPANY], old)['companies'][0]
         self.assertEqual(result['facts'], old['companies'][0]['facts'])
         self.assertEqual(result['collection_status'], 'FAILED')
+
+    def test_cache_filtered_rows_quarantined_with_provenance(self):
+        import copy
+        for changes, unit in [({'form': '8-K'}, 'USD'),
+                              ({'start': '2025-10-01'}, 'USD'),
+                              ({'dimensions': {'segment': 'x'}}, 'USD'),
+                              ({'segment': {'name': 'x'}}, 'USD'),
+                              ({}, 'shares')]:
+            with self.subTest(changes=changes, unit=unit):
+                old = cache(25)
+                valid = old['companies'][0]['facts']['us-gaap']['Revenues']['units']['USD'][0]
+                valid['source_fact_id'] = 'original-provenance'
+                invalid = dict(ROW, **changes)
+                units = old['companies'][0]['facts']['us-gaap']['Revenues']['units']
+                units.setdefault(unit, []).append(invalid)
+                before = copy.deepcopy(old)
+                with patch.object(sec, 'request_json', return_value={}):
+                    result = sec.collect([COMPANY], old)['companies'][0]
+                self.assertEqual(result['facts']['us-gaap']['Revenues']['units']['USD'], [valid])
+                self.assertEqual(result['rejected_observations'], [dict(
+                    namespace='us-gaap', concept='Revenues', unit=unit,
+                    observation=invalid,
+                    reason='Excluded by configured form, period, dimensions or unit filters')])
+                self.assertEqual(result['cache_validation_status'], 'PARTIALLY_REJECTED')
+                self.assertEqual(old, before)
+                again = sec.recover_cache(result, COMPANY['cik'])
+                self.assertEqual(again, result)
+
+    def test_unknown_historical_concepts_preserved_and_not_validated(self):
+        import copy
+        for namespace in ['us-gaap', 'custom-issuer']:
+            old = cache(25)
+            unknown = {'label': 'Historical label', 'units': {'USD': [dict(ROW, form='8-K')]}}
+            old['companies'][0]['facts'].setdefault(namespace, {})['UnknownConcept'] = unknown
+            before = copy.deepcopy(old)
+            for response in [{}, document()]:
+                with patch.object(sec, 'request_json', return_value=response):
+                    result = sec.collect([COMPANY], old)['companies'][0]
+                self.assertEqual(result['facts'][namespace]['UnknownConcept'], unknown)
+                self.assertEqual(result['historical_concepts'], [dict(
+                    namespace=namespace, concept='UnknownConcept', validation_status='NOT_EVALUATED',
+                    reason='Historical concept outside configured TAGS; preserved verbatim')])
+                self.assertEqual(result['rejected_observations'], [])
+                self.assertEqual(old, before)
 
 
 if __name__ == '__main__':
