@@ -1,0 +1,76 @@
+[
+  {
+    "issuer": {
+      "id": "fictional-issuer-A",
+      "legal_name": "FICTIONAL EXAMPLE A",
+      "country": "ZZ",
+      "cik": "0000000001",
+      "lei": "UNKNOWN",
+      "identity": {
+        "ref": "fictional-issuer-proof",
+        "checked_at": "2026-01-01T00:00:00Z",
+        "result": "VERIFIED"
+      }
+    },
+    "instrument": {
+      "id": "fictional-share-A",
+      "issuer_id": "fictional-issuer-A",
+      "kind": "ORDINARY_SHARE",
+      "isin": "ZZ0000000000",
+      "class": "ordinary",
+      "identity": {
+        "ref": "fictional-security-proof",
+        "checked_at": "2026-01-01T00:00:00Z",
+        "result": "VERIFIED"
+      }
+    },
+    "listing": {
+      "id": "fictional-listing-A",
+      "instrument_id": "fictional-share-A",
+      "ticker": "FICT",
+      "mic": "XXXX",
+      "currency": "USD",
+      "status": "ACTIVE",
+      "identity": {
+        "ref": "fictional-listing-proof",
+        "checked_at": "2026-01-01T00:00:00Z",
+        "result": "VERIFIED"
+      }
+    },
+    "source": {
+      "adapter": "SEC_COMPANYFACTS",
+      "issuer_id": "fictional-issuer-A",
+      "reference": "https://example.invalid/document",
+      "official_check": {
+        "ref": "fictional-origin-check",
+        "checked_at": "2026-01-01T00:00:00Z",
+        "result": "VERIFIED"
+      },
+      "access": {
+        "result": "AVAILABLE",
+        "authorization": "AUTHORIZED",
+        "identity": {
+          "ref": "fictional-probe",
+          "checked_at": "2026-01-01T00:00:00Z",
+          "result": "VERIFIED"
+        }
+      },
+      "filing": {
+        "ref": "fictional-filing",
+        "identity": {
+          "ref": "fictional-filing-check",
+          "checked_at": "2026-01-01T00:00:00Z",
+          "result": "VERIFIED"
+        }
+      },
+      "xbrl": {
+        "taxonomy": "us-gaap",
+        "identity": {
+          "ref": "fictional-xbrl-check",
+          "checked_at": "2026-01-01T00:00:00Z",
+          "result": "VERIFIED"
+        }
+      }
+    }
+  }
+]

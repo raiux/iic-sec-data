@@ -1,0 +1,552 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IIC B2 external identity batch",
+  "description": "Fictional examples are not access checks. Strict source assertion schema; semantic checks remain required.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "issuer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "legal_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "country": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "cik": {
+            "type": "string",
+            "anyOf": [
+              {
+                "const": "UNKNOWN"
+              },
+              {
+                "pattern": "^[0-9]{10}$"
+              }
+            ]
+          },
+          "lei": {
+            "type": "string",
+            "anyOf": [
+              {
+                "const": "UNKNOWN"
+              },
+              {
+                "pattern": "^[A-Z0-9]{20}$"
+              }
+            ]
+          },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checked_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "result": {
+                "type": "string",
+                "enum": [
+                  "VERIFIED",
+                  "UNVERIFIED",
+                  "CONFLICT"
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "checked_at",
+              "result"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "legal_name",
+          "country",
+          "cik",
+          "lei",
+          "identity"
+        ],
+        "additionalProperties": false
+      },
+      "instrument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "issuer_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ORDINARY_SHARE",
+              "ADR",
+              "ETF",
+              "ETN",
+              "FUND",
+              "OTHER",
+              "UNKNOWN"
+            ]
+          },
+          "isin": {
+            "type": "string",
+            "anyOf": [
+              {
+                "const": "UNKNOWN"
+              },
+              {
+                "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"
+              }
+            ]
+          },
+          "class": {
+            "type": "string",
+            "minLength": 1
+          },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checked_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "result": {
+                "type": "string",
+                "enum": [
+                  "VERIFIED",
+                  "UNVERIFIED",
+                  "CONFLICT"
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "checked_at",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          "underlying": {
+            "type": "object",
+            "properties": {
+              "issuer_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "identity": {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "checked_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "result": {
+                    "type": "string",
+                    "enum": [
+                      "VERIFIED",
+                      "UNVERIFIED",
+                      "CONFLICT"
+                    ]
+                  }
+                },
+                "required": [
+                  "ref",
+                  "checked_at",
+                  "result"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "issuer_id",
+              "identity"
+            ],
+            "additionalProperties": false
+          },
+          "ratio": {
+            "type": "object",
+            "properties": {
+              "decimal": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$"
+              },
+              "identity": {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "checked_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "result": {
+                    "type": "string",
+                    "enum": [
+                      "VERIFIED",
+                      "UNVERIFIED",
+                      "CONFLICT"
+                    ]
+                  }
+                },
+                "required": [
+                  "ref",
+                  "checked_at",
+                  "result"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "decimal",
+              "identity"
+            ],
+            "additionalProperties": false
+          },
+          "rights": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checked_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "result": {
+                "type": "string",
+                "enum": [
+                  "VERIFIED",
+                  "UNVERIFIED",
+                  "CONFLICT"
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "checked_at",
+              "result"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "issuer_id",
+          "kind",
+          "isin",
+          "class",
+          "identity"
+        ],
+        "additionalProperties": false
+      },
+      "listing": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "instrument_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ticker": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mic": {
+            "type": "string",
+            "anyOf": [
+              {
+                "const": "UNKNOWN"
+              },
+              {
+                "pattern": "^[A-Z0-9]{4}$"
+              }
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Z]{3}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DELISTED",
+              "UNKNOWN"
+            ]
+          },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checked_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "result": {
+                "type": "string",
+                "enum": [
+                  "VERIFIED",
+                  "UNVERIFIED",
+                  "CONFLICT"
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "checked_at",
+              "result"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "instrument_id",
+          "ticker",
+          "mic",
+          "currency",
+          "status",
+          "identity"
+        ],
+        "additionalProperties": false
+      },
+      "source": {
+        "type": "object",
+        "properties": {
+          "adapter": {
+            "type": "string",
+            "enum": [
+              "SEC_COMPANYFACTS",
+              "ESEF",
+              "ISSUER_REPORT",
+              "SEDAR_PLUS"
+            ]
+          },
+          "issuer_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reference": {
+            "type": "string",
+            "minLength": 1
+          },
+          "official_check": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checked_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "result": {
+                "type": "string",
+                "enum": [
+                  "VERIFIED",
+                  "UNVERIFIED",
+                  "CONFLICT"
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "checked_at",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          "access": {
+            "type": "object",
+            "properties": {
+              "result": {
+                "type": "string",
+                "enum": [
+                  "AVAILABLE",
+                  "UNAVAILABLE",
+                  "UNVERIFIED"
+                ]
+              },
+              "authorization": {
+                "type": "string",
+                "enum": [
+                  "AUTHORIZED",
+                  "DENIED",
+                  "UNVERIFIED"
+                ]
+              },
+              "identity": {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "checked_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "result": {
+                    "type": "string",
+                    "enum": [
+                      "VERIFIED",
+                      "UNVERIFIED",
+                      "CONFLICT"
+                    ]
+                  }
+                },
+                "required": [
+                  "ref",
+                  "checked_at",
+                  "result"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "result",
+              "authorization",
+              "identity"
+            ],
+            "additionalProperties": false
+          },
+          "filing": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "identity": {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "checked_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "result": {
+                    "type": "string",
+                    "enum": [
+                      "VERIFIED",
+                      "UNVERIFIED",
+                      "CONFLICT"
+                    ]
+                  }
+                },
+                "required": [
+                  "ref",
+                  "checked_at",
+                  "result"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "ref",
+              "identity"
+            ],
+            "additionalProperties": false
+          },
+          "xbrl": {
+            "type": "object",
+            "properties": {
+              "taxonomy": {
+                "type": "string",
+                "minLength": 1
+              },
+              "identity": {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "checked_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "result": {
+                    "type": "string",
+                    "enum": [
+                      "VERIFIED",
+                      "UNVERIFIED",
+                      "CONFLICT"
+                    ]
+                  }
+                },
+                "required": [
+                  "ref",
+                  "checked_at",
+                  "result"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "taxonomy",
+              "identity"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "adapter",
+          "issuer_id",
+          "reference",
+          "official_check",
+          "access",
+          "filing",
+          "xbrl"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "issuer",
+      "instrument",
+      "listing"
+    ],
+    "additionalProperties": false
+  }
+}
