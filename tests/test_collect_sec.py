@@ -303,6 +303,38 @@ class SecTests(unittest.TestCase):
                 again = sec.recover_cache(result, COMPANY['cik'])
                 self.assertEqual(again, result)
 
+    def test_quarantine_refresh_lifecycle(self):
+        for fail_first in (False, True):
+            with self.subTest(fail_first=fail_first):
+                previous = cache(1)
+                bad = dict(ROW, form='8-K')
+                previous['companies'][0]['facts']['us-gaap']['Revenues']['units']['USD'].append(bad)
+                replies = ([{}] if fail_first else []) + [document()]
+                with patch.object(sec, 'request_json', side_effect=replies) as fetch:
+                    if fail_first:
+                        previous = sec.collect([COMPANY], previous)
+                        failed = previous['companies'][0]
+                        self.assertEqual((failed['status'], failed['collection_status'],
+                                          failed['cache_validation_status']),
+                                         ('STALE_RETAINED', 'FAILED', 'PARTIALLY_REJECTED'))
+                    previous = sec.collect([COMPANY], previous)
+                    success = previous['companies'][0]
+                    self.assertEqual((success['status'], success['cache_validation_status']),
+                                     ('FETCHED', 'CANDIDATE'))
+                    journal = success['rejected_observations']
+                    self.assertEqual(len(journal), 1)
+                    self.assertEqual(journal[0]['observation'], bad)
+                    self.assertEqual(success['facts'], document()['facts'])
+                    for _ in range(2):
+                        previous = sec.collect([COMPANY], previous)
+                        fresh = previous['companies'][0]
+                        self.assertEqual((fresh['status'], fresh['collection_status'], fresh['data_status'],
+                                          fresh['cache_validation_status']),
+                                         ('CACHE_FRESH', 'NOT_REQUESTED', 'RETAINED', 'CANDIDATE'))
+                        for field in ['fetched_at', 'facts', 'rejected_observations']:
+                            self.assertEqual(fresh[field], success[field])
+                    self.assertEqual(fetch.call_count, len(replies))
+
     def test_unknown_historical_concepts_preserved_and_not_validated(self):
         import copy
         for namespace in ['us-gaap', 'custom-issuer']:

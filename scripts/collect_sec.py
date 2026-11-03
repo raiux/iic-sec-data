@@ -183,6 +183,7 @@ def recover_cache(cached, cik):
     rejected = recovered.setdefault('rejected_observations', [])
     if not isinstance(rejected, list) or not isinstance(recovered.get('facts'), dict):
         raise ValueError('Unreadable cache structure; publication blocked')
+    archived_count = len(rejected)
     historical = []
     for ns, concepts in recovered['facts'].items():
         if not isinstance(concepts, dict):
@@ -213,6 +214,11 @@ def recover_cache(cached, cik):
                     else:
                         kept.append(row)
                 concept['units'][unit] = kept
+    # Older FETCHED entries could still label their audit history PARTIALLY_REJECTED.
+    pending = (cached.get('cache_validation_status') == 'PARTIALLY_REJECTED'
+               and cached.get('status') != 'FETCHED')
+    recovered['cache_validation_status'] = (
+        'PARTIALLY_REJECTED' if pending or len(rejected) > archived_count else 'CANDIDATE')
     recovered['historical_concepts'] = historical
     # If nothing usable remains, abort rather than overwrite historical state.
     compact_facts(recovered, cik, downloaded=False)
@@ -234,7 +240,8 @@ def collect(companies, previous):
             raise ValueError('Invalid configured CIK')
         cached = old.get(cik)
         stamp = parse_time(cached.get('fetched_at')) if cached else None
-        fresh = not (cached or {}).get('rejected_observations') and stamp is not None and timedelta(0) <= now() - stamp < CACHE_AGE
+        fresh = (stamp is not None and cached['cache_validation_status'] == 'CANDIDATE'
+                 and timedelta(0) <= now() - stamp < CACHE_AGE)
         source = f'https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json'
         if fresh:
             item = {**cached, **company, 'cik': cik, 'status': 'CACHE_FRESH'}
@@ -266,7 +273,8 @@ def collect(companies, previous):
                     facts = merged
                 item = dict(cached or {}, **company)
                 item.update(cik=cik, facts=facts, fetched_at=now().isoformat(),
-                            source_url=source, status='FETCHED', validation_status='CANDIDATE')
+                            source_url=source, status='FETCHED', validation_status='CANDIDATE',
+                            cache_validation_status='CANDIDATE')
             except (SecBlocked, urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException, ValueError) as exc:
                 blocked = blocked or isinstance(exc, SecBlocked)
                 error = str(exc)
@@ -282,7 +290,6 @@ def collect(companies, previous):
                                      'STALE_RETAINED': 'FAILED'}[item['status']]
         item['data_status'] = 'NEW_AND_RETAINED' if item['status'] == 'FETCHED' and cached else (
             'NEW' if item['status'] == 'FETCHED' else 'RETAINED')
-        item['cache_validation_status'] = 'PARTIALLY_REJECTED' if item.get('rejected_observations') else 'CANDIDATE'
         item['validation_status'] = (cached or {}).get('validation_status', 'CANDIDATE') if item['status'] != 'FETCHED' else 'CANDIDATE'
         output['companies'].append(item)
     configured = {str(c['cik']).zfill(10) for c in companies}
