@@ -78,9 +78,9 @@ def _json(raw):
 
 
 def _envelope(history, generation):
-    encoded = serialize(history)
-    document = dict(storage_format=FORMAT, generation=generation, history=history,
-                    history_sha256=hashlib.sha256(encoded.encode('utf-8')).hexdigest())
+    serialize(history)  # Reuse full mission-08 validation/private serialization.
+    document = dict(storage_format=FORMAT, generation=generation, history=history)
+    document['payload_sha256'] = hashlib.sha256(canonical_json(document).encode('utf-8')).hexdigest()
     payload = canonical_json(document).encode('utf-8')
     if len(payload) > MAX_STORE_BYTES:
         raise StoreError('LOCAL_FILE_SIZE_LIMIT')
@@ -90,16 +90,17 @@ def _envelope(history, generation):
 
 def _decode(raw):
     doc = _json(raw)
-    if (type(doc) is not dict or set(doc) != {'storage_format', 'generation', 'history', 'history_sha256'}
+    if (type(doc) is not dict or set(doc) != {'storage_format', 'generation', 'history', 'payload_sha256'}
             or doc['storage_format'] != FORMAT or type(doc['generation']) is not int
-            or not 1 <= doc['generation'] <= 2**63 - 1 or type(doc['history_sha256']) is not str):
+            or not 1 <= doc['generation'] <= 2**63 - 1 or type(doc['payload_sha256']) is not str):
         raise StoreError('STORAGE_FORMAT_INVALID_OR_UNSUPPORTED')
     try:
         validate_history(doc['history'])
-        digest = hashlib.sha256(serialize(doc['history']).encode('utf-8')).hexdigest()
+        content = {key: value for key, value in doc.items() if key != 'payload_sha256'}
+        digest = hashlib.sha256(canonical_json(content).encode('utf-8')).hexdigest()
     except (ValueError, TypeError, RecursionError, OverflowError) as exc:
         raise StoreError('STORED_HISTORY_INVALID') from exc
-    if doc['history_sha256'] != digest:
+    if doc['payload_sha256'] != digest:
         raise StoreError('STORED_HISTORY_CHECKSUM_MISMATCH')
     return doc
 

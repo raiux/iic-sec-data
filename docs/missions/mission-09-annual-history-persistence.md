@@ -43,6 +43,11 @@ validate_history (test 08 existant). **Aucun défaut accessible true/1 n'a été
 reproduit sur ces frontières ; aucune correction de 08 n'est donc revendiquée.**
 Les nouveaux tests vérifient aussi que les octets source true et 1 créent deux
 versions distinctes, et qu'un compteur disque true, false, 1.0 ou "1" est rejeté.
+La revue du nouveau format a en revanche reproduit un défaut avant publication :
+modifier le compteur de génération positif était accepté, car l'empreinte ne
+couvrait que history. Correction : empreinte de l'enveloppe complète hors son
+champ d'empreinte ; test de régression charge/import sans écrasement. Toutes les
+vérifications finales sont relancées après cette correction.
 Une première assertion de test mélangeait IFRS/CAD et US-GAAP/USD comme si leurs
 concepts étaient identiques : fixture corrigée vers IFRS/CAD, sans changer la règle
 métier ni provoquer un faux conflit. Les relances finales suivent cette correction.
@@ -71,8 +76,8 @@ inchangés. Réessayer après commit incertain est donc idempotent.
 
 L'enveloppe JSON a exactement quatre propriétés :
 `storage_format="iic.annual-history-store.v1"`, `generation` entier positif strict
-(non booléen), `history` au contrat 08, `history_sha256` de la sérialisation privée
-canonique. Chaque version source conserve ses octets, SHA, références et conflits.
+(non booléen), `history` au contrat 08, `payload_sha256` de la sérialisation canonique de ces trois premiers
+champs (l'empreinte ne se couvre pas elle-même). Chaque version source conserve ses octets, SHA, références et conflits.
 Le chargement réexécute validate_history et vérifie l'empreinte globale ; il rejette
 clés JSON dupliquées, NaN/Infinity, UTF-8 invalide, champs absents/supplémentaires,
 versions inconnues, altérations et compteurs de type incorrect. Aucun ancien format

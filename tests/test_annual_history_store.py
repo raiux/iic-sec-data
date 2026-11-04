@@ -175,7 +175,7 @@ class AnnualHistoryStoreTests(unittest.TestCase):
         bad_version = dict(envelope, storage_format='iic.annual-history-store.v999')
         bad_history = copy.deepcopy(envelope)
         bad_history['history']['reports'][0]['observations'] = []
-        bad_hash = dict(envelope, history_sha256='0'*64)
+        bad_hash = dict(envelope, payload_sha256='0'*64)
         bad_history_version = copy.deepcopy(envelope)
         bad_history_version['history']['schema_version'] = 'iic.annual-history.v999'
         payloads = [b'', b'{', b'{}', b'[]', b'\xff',
@@ -192,6 +192,17 @@ class AnnualHistoryStoreTests(unittest.TestCase):
         # Recovery is explicit, using a caller-held known backup; never choose a temporary.
         self.path.write_bytes(original)
         self.assertEqual(len(self.store.load().history['reports']), 1)
+
+    def test_positive_generation_tampering_is_detected_before_any_write(self):
+        self.initialized()
+        envelope = json.loads(self.path.read_bytes())
+        envelope['generation'] += 1
+        altered = canonical_json(envelope).encode()
+        self.path.write_bytes(altered)
+        for operation in [self.store.load, lambda: self.store.import_report(report())]:
+            with self.assertRaisesRegex(storage.StoreError, 'CHECKSUM_MISMATCH'):
+                operation()
+            self.assertEqual(self.path.read_bytes(), altered)
 
     def test_json_types_cannot_alias_revisions_or_metadata(self):
         item = report()
