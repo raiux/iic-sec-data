@@ -39,7 +39,7 @@ def _point(document, pointer):
 
 def _expected_taxonomy(cik, taxonomy_by_cik):
     value = taxonomy_by_cik.get(cik)
-    return value if value in {'us-gaap', 'ifrs-full'} else None
+    return value if type(value) is str and value in {'us-gaap', 'ifrs-full'} else None
 
 
 def _sec_archive_ref(record):
@@ -130,7 +130,9 @@ def _taxonomy_from_bundle(bundle):
         expected = set()
         for instrument in issuer.get('instruments', []):
             for item in instrument.get('provenance', []):
-                if item.get('role') == 'source.xbrl.taxonomy' and item.get('ref') in {'us-gaap', 'ifrs-full'}:
+                if (item.get('role') == 'source.xbrl.taxonomy'
+                        and type(item.get('ref')) is str
+                        and item['ref'] in {'us-gaap', 'ifrs-full'}):
                     expected.add(item['ref'])
         if len(expected) == 1:
             result[issuer['cik']] = next(iter(expected))

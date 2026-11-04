@@ -50,6 +50,40 @@ class C2AccountingTests(unittest.TestCase):
     def c2(self, bundle, evidence=()):
         return validate_bundle(bundle, evidence=evidence)
 
+    def test_taxonomy_mapping_json_values_are_checked_without_crashing(self):
+        normalization = c1_bundle()['normalization']
+        for value in ([], {}, None, 42, 'unknown', 'us-gaap', 'ifrs-full'):
+            with self.subTest(value=value):
+                report = validate_normalization(
+                    normalization, taxonomy_by_cik={'0000000001': value})
+                expected = ('CONSISTENT_WITH_B3_ASSERTION' if value == 'us-gaap'
+                            else 'CONFLICT' if value == 'ifrs-full' else 'UNCHECKED')
+                self.assertEqual(report['observations'][0]['checks']['taxonomy'], expected)
+                self.assertEqual(report['visibility'], 'PRIVATE')
+                self.assertFalse(report['valuation_usable'])
+                self.assertNotEqual(report['accounting_validation'], 'VERIFIED')
+
+    def test_bundle_taxonomy_json_values_at_schema_boundary(self):
+        for value in ([], {}, None, 42, 'unknown', 'us-gaap', 'ifrs-full'):
+            with self.subTest(value=value):
+                bundle = c1_bundle()
+                provenance = bundle['issuers'][0]['instruments'][0]['provenance']
+                for item in provenance:
+                    if item.get('role') == 'source.xbrl.taxonomy':
+                        item['ref'] = value
+                self.assertTrue(any(item.get('role') == 'source.xbrl.taxonomy'
+                                    for item in provenance))
+                validator('b3-c1-integration.schema.json').validate(bundle)
+                original = copy.deepcopy(bundle)
+                report = validate_bundle(bundle)
+                expected = ('CONSISTENT_WITH_B3_ASSERTION' if value == 'us-gaap'
+                            else 'CONFLICT' if value == 'ifrs-full' else 'UNCHECKED')
+                self.assertEqual(report['observations'][0]['checks']['taxonomy'], expected)
+                self.assertEqual(report['visibility'], 'PRIVATE')
+                self.assertFalse(report['valuation_usable'])
+                self.assertNotEqual(report['accounting_validation'], 'VERIFIED')
+                self.assertEqual(bundle, original)
+
     def test_b3_c1_c2_keeps_separate_gates_and_raw_provenance(self):
         bundle = c1_bundle()
         report = self.c2(bundle)
