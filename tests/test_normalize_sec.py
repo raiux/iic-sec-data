@@ -9,7 +9,7 @@ from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.normalize_sec import normalize_snapshot, parse_raw
+from scripts.normalize_sec import CORE_METRICS, normalize_snapshot, parse_raw
 
 CLOCK = date(2026,11,3)
 BASE = Path(__file__).resolve().parents[1]
@@ -145,12 +145,40 @@ class SecNormalizationTests(unittest.TestCase):
         payload=(BASE/'data/sec_facts.json').read_bytes().decode()
         with patch('urllib.request.urlopen',side_effect=AssertionError('Unexpected request')):
             result=normalize_snapshot(payload,as_of=CLOCK,source_locator='data/sec_facts.json')
-        self.assertEqual(len(result['observations']),246)
-        self.assertEqual(sum(o['structure']=='CANDIDATE' for o in result['observations']),242)
-        self.assertEqual(sum(o['structure']=='OUT_OF_SCOPE' for o in result['observations']),4)
+        # Enumerate source rows independently: no dropped, duplicated or invented facts.
+        document = parse_raw(payload)
+        expected_pointers = set()
+        for index, company in enumerate(document['companies']):
+            for namespace, concepts in company['facts'].items():
+                for concept, detail in concepts.items():
+                    for unit, rows in detail['units'].items():
+                        parts = [namespace, concept, unit]
+                        namespace_part, concept_part, unit_part = [
+                            part.replace('~', '~0').replace('/', '~1') for part in parts]
+                        for row_index in range(len(rows)):
+                            expected_pointers.add(
+                                f'/companies/{index}/facts/{namespace_part}/{concept_part}'
+                                f'/units/{unit_part}/{row_index}')
+        pointers = [item['raw_pointer'] for item in result['observations']]
+        self.assertTrue(expected_pointers)
+        self.assertEqual(set(pointers), expected_pointers)
+        self.assertEqual(len(pointers), len(expected_pointers))
+        self.assertEqual(result['raw_document'], payload)
+        digest = hashlib.sha256(payload.encode()).hexdigest()
+        self.assertEqual(result['source']['sha256'], digest)
+        self.assertEqual(result['visibility'], 'PRIVATE')
+        self.assertFalse(result['valuation_usable'])
         self.assertEqual(result['source']['online_verification'],'NOT_PERFORMED')
-        cameco=next(c for c in result['coverage'] if c['cik']=='0001009001')
-        self.assertIn('diluted_average_shares_reported',cameco['missing_metrics'])
+        self.assertEqual({entry['cik'] for entry in result['coverage']},
+                         {company['cik'] for company in document['companies']})
+        for coverage in result['coverage']:
+            metrics = {item['normalized']['metric'] for item in result['observations']
+                       if item['cik'] == coverage['cik'] and item['structure'] == 'CANDIDATE'}
+            self.assertEqual(coverage['candidate_metrics'], sorted(metrics))
+            self.assertEqual(coverage['missing_metrics'], sorted(set(CORE_METRICS) - metrics))
+        for group in result['groups']:
+            self.assertIsNone(group['selected_observation_id'])
+            self.assertFalse(group['valuation_usable'])
         for observation in result['observations']:
             self.assertFalse(observation['valuation_usable'])
             self.assertEqual(observation['accounting_validation'],'UNCHECKED')
@@ -162,6 +190,19 @@ class SecNormalizationTests(unittest.TestCase):
                 token=token.replace('~1','/').replace('~0','~')
                 value=value[int(token)] if isinstance(value,list) else value[token]
             self.assertIsInstance(value,dict)
+            self.assertEqual(observation['source_sha256'], digest)
+            self.assertEqual(observation['id'], hashlib.sha256(
+                (digest + observation['raw_pointer']).encode()).hexdigest())
+            if observation['structure'] == 'CANDIDATE':
+                self.assertEqual(observation['normalized']['value'], str(value['val']))
+
+    def test_fixture_coverage_keeps_missing_metrics_and_excluded_rows(self):
+        result = run(fixture([dict(ROW), dict(ROW, dimensions={'segment': 'fictional'})]))
+        self.assertEqual([item['structure'] for item in result['observations']],
+                         ['CANDIDATE', 'OUT_OF_SCOPE'])
+        self.assertEqual(result['coverage'][0]['candidate_metrics'], ['revenue_reported'])
+        self.assertEqual(result['coverage'][0]['missing_metrics'],
+                         sorted(set(CORE_METRICS) - {'revenue_reported'}))
 
     def test_cli_preserves_snapshot(self):
         source=BASE/'data/sec_facts.json'

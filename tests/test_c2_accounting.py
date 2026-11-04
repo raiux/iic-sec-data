@@ -223,25 +223,47 @@ class C2AccountingTests(unittest.TestCase):
             self.assertEqual(report['invalid_evidence'], [])
 
     def test_parent_attribution_stays_unchecked(self):
-        normalization = normalize_snapshot(
-            (BASE / 'data/sec_facts.json').read_bytes().decode('utf-8'),
-            as_of=date(2026, 11, 3), source_locator='data/sec_facts.json')
-        result = validate_normalization(normalization,
-            taxonomy_by_cik={MSFT_CIK: 'us-gaap', CAMECO_CIK: 'ifrs-full'})
-        for cik, taxonomy in ((MSFT_CIK, 'us-gaap'), (CAMECO_CIK, 'ifrs-full')):
-            issuer = next(item for item in result['issuers'] if item['cik'] == cik)
-            self.assertEqual(issuer['taxonomy'], taxonomy)
-            self.assertTrue(any(item['namespace'] == taxonomy and item['structure'] == 'CANDIDATE'
-                                for item in issuer['observations']))
-            self.assertEqual(issuer['accounting_validation'], 'UNCHECKED')
+        self.assert_parent_attribution(conflict=False)
+
+    def test_parent_attribution_stays_unchecked_despite_global_conflict(self):
+        self.assert_parent_attribution(conflict=True)
+
+    def assert_parent_attribution(self, *, conflict):
+        # Dedicated fictitious IFRS/US-GAAP fixtures, not mutable pilot accounts.
+        raw = dict(schema=1, companies=[])
+        taxonomies = {'0000000001': 'us-gaap', '0000000002': 'ifrs-full'}
+        for cik, namespace in taxonomies.items():
+            concept = 'NetIncomeLoss' if namespace == 'us-gaap' else 'ProfitLoss'
+            rows = [dict(ROW)]
+            if conflict:
+                rows.append(dict(ROW, val=99, form='10-K/A', accn='0000000001-26-000002'))
+            raw['companies'].append(dict(name='FICTIONAL ISSUER', cik=cik,
+                facts={namespace: {concept: {'units': {'USD': rows}}}}))
+        payload = json.dumps(raw)
+        normalization = normalize_snapshot(payload, as_of=date(2026, 11, 3),
+                                            source_locator='fictional-parent-attribution.json')
+        result = validate_normalization(normalization, taxonomy_by_cik=taxonomies)
+        expected = 'CONFLICT' if conflict else 'UNCHECKED'
+        self.assertEqual(result['accounting_validation'], expected)
+        self.assertEqual(result['visibility'], 'PRIVATE')
+        self.assertFalse(result['valuation_usable'])
+        self.assertEqual(result['source_snapshot']['raw_document'], payload)
+        for issuer in result['issuers']:
+            self.assertEqual(issuer['taxonomy'], taxonomies[issuer['cik']])
+            self.assertEqual(issuer['accounting_validation'], expected)
             self.assertFalse(issuer['valuation_usable'])
+            self.assertEqual(len(issuer['observations']), 2 if conflict else 1)
+            self.assertEqual(issuer['groups'][0]['status'],
+                             'CONFLICT' if conflict else 'SINGLE_CANDIDATE')
+            self.assertIsNone(issuer['groups'][0]['selected_observation_id'])
         for item in result['observations']:
-            if item['metric'] == 'net_income_reported':
-                self.assertEqual(item['checks']['parent_attribution'], 'UNCHECKED_PARENT_ATTRIBUTION')
+            self.assertEqual(item['metric'], 'net_income_reported')
+            self.assertEqual(item['status'], expected)
+            self.assertEqual(item['reasons'], ['CONFLICT_UNARBITRATED'] if conflict else [])
+            self.assertEqual(item['checks']['parent_attribution'], 'UNCHECKED_PARENT_ATTRIBUTION')
+            self.assertEqual(item['checks']['consolidation_scope'], 'UNCHECKED')
+            self.assertFalse(item['valuation_usable'])
         self.assertEqual(result['source_verification'], 'NOT_PERFORMED')
-        self.assertNotEqual(result['source_verification'], 'VERIFIED')
-        self.assertNotEqual(result['accounting_validation'], 'VERIFIED')
-        self.assertTrue(all(item['status'] != 'VERIFIED' for item in result['observations']))
 
     def test_corrupt_raw_hash_or_pointer_is_not_silently_trusted(self):
         bundle = c1_bundle()

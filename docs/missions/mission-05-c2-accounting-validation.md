@@ -29,3 +29,44 @@ git diff --exit-code -- data tests/fixtures
 ```
 
 Le workflow `.github/workflows/test-c2-accounting.yml` utilise un checkout unique, les dépendances gratuites épinglées, la suite complète sans réseau ni skip, compilation et contrôle des données/fixtures. Les runs C2, SEC, C1 et B3→C1 sont distincts et doivent être verts sur le SHA de PR avant validation.
+
+## IIC 05-C2-SNAPSHOT-INTEGRATION-20261104
+
+La mise à jour du snapshot sur main (`6d489db`) expose deux hypothèses de tests
+incorrectes, reproduites sur la référence de fusion de #13 :
+
+- C1 attendait 246 observations (242 candidates et 4 hors périmètre). Le snapshot
+  actualisé contient 544 lignes candidates. Le contrat est la conservation de
+  chaque ligne, pas un volume figé ni une couverture manquante permanente.
+- Le test d'attribution parent attendait aussi un état global UNCHECKED pour les
+  pilotes. C2 détecte légitimement 20 observations Microsoft en conflit non
+  arbitré. Par exemple, le groupe d'actifs au 2015-06-30 contient deux montants
+  distincts conservés sous les accessions `0001193125-15-272806` et
+  `0001193125-16-662209`. Leur présence ne permet pas de choisir une valeur.
+  L'attribution parent reste indépendamment UNCHECKED_PARENT_ATTRIBUTION.
+  Ce constat porte sur le cache local, sans authentification des dépôts.
+
+Les tests d'attribution utilisent désormais des fixtures fictives construites
+localement, IFRS et US-GAAP, avec et sans conflit : états globaux exacts,
+conservation des observations, absence de sélection et attribution non vérifiée
+sont contrôlés séparément. Un cas de couverture fictif vérifie les métriques
+manquantes et les lignes dimensionnelles exclues. Le test du snapshot réel
+énumère les pointeurs depuis l'entrée, impose une bijection avec les observations,
+contrôle les SHA256/identifiants/valeurs retenues, la couverture par émetteur,
+PRIVATE et l'absence d'utilisation en valorisation. Aucun code comptable ni
+fichier de données ou fixture existante n'est modifié par cet incrément.
+
+Validation avant publication, sur HEAD et dans une copie isolée de sa fusion
+avec main `6d489db` :
+
+```sh
+python -m unittest tests.test_c2_accounting tests.test_normalize_sec -q
+python -m scripts.run_offline_tests
+python -m compileall -q scripts tests
+```
+
+Résultats : 34 tests ciblés et 148 tests intégrés réussis sur chaque arbre,
+sans skip. La suite unittest complète passe aussi sur HEAD. Les fichiers de
+`data/` et `tests/fixtures/` sont comparés à leur arbre Git respectif ; aucun
+changement. Les preuves et six résultats CI du SHA livré sont publiés sur #13,
+avec synthèse de coordination sur #11. Aucun VERIFIED, collecte SEC, fusion ou C3.
