@@ -133,6 +133,61 @@ class C2AccountingTests(unittest.TestCase):
         self.assertEqual(result['observations'][0]['checks']['unit'], 'FAIL')
         self.assertFalse(result['valuation_usable'])
 
+    def test_excluded_row_pointer_identity_conflicts_at_all_levels(self):
+        for field, value in [('concept', 'Assets'), ('id', '0' * 64)]:
+            with self.subTest(field=field):
+                bundle = c1_bundle(rows=[dict(ROW, dimensions={'segment': 'example'})])
+                bundle['normalization']['observations'][0][field] = value
+                report = self.c2(bundle)
+                obs = report['observations'][0]
+                self.assertEqual(obs['checks']['raw_pointer'], 'FAIL')
+                self.assertEqual(obs['status'], 'CONFLICT')
+                self.assertEqual(report['issuers'][0]['accounting_validation'], 'CONFLICT')
+                self.assertEqual(report['accounting_validation'], 'CONFLICT')
+
+    def test_raw_concept_controls_period_and_units_of_excluded_rows(self):
+        shares = 'WeightedAverageNumberOfDilutedSharesOutstanding'
+        for concept, unit, row, unit_status, period, status in [
+            (shares, 'USD', ROW, 'FAIL', 'PASS', 'CONFLICT'),
+            (shares, 'shares', dict(ROW, dimensions={'segment': 'example'}), 'PASS', 'PASS', 'UNCHECKED'),
+            ('Revenues', 'USD', dict(ROW, start='2026-04-01'), 'PASS', 'OUT_OF_SCOPE', 'UNCHECKED'),
+        ]:
+            with self.subTest(concept=concept, unit=unit):
+                obs = self.c2(c1_bundle(rows=[row], concept=concept, unit=unit))['observations'][0]
+                self.assertEqual((obs['checks']['unit'], obs['checks']['period'], obs['status']),
+                                 (unit_status, period, status))
+
+    def test_conflicts_survive_deleted_or_relabelled_c1_groups(self):
+        for remove in (True, False):
+            with self.subTest(remove=remove):
+                bundle = c1_bundle(rows=[ROW, dict(ROW, val=99)])
+                groups = bundle['normalization']['groups']
+                if remove:
+                    groups.clear()
+                else:
+                    groups[0]['status'] = 'REPEATED_VALUE_CANDIDATES'
+                report = self.c2(bundle)
+                self.assertEqual(report['accounting_validation'], 'CONFLICT')
+                self.assertTrue(all(o['status'] == 'CONFLICT' for o in report['observations']))
+                self.assertIn('CONFLICT_UNARBITRATED', report['issuers'][0]['valuation_blockers'])
+
+    def test_invalid_evidence_preserves_other_assertions(self):
+        for field, value, reason in [
+            *(('taxonomy', v, 'EVIDENCE_TAXONOMY_INVALID') for v in ([], {}, None, 7, 'unknown')),
+            ('document_url', 'https://[', 'EVIDENCE_REFERENCE_INVALID'),
+        ]:
+            with self.subTest(field=field, value=value):
+                bad = dict(filing_evidence(), **{field: value})
+                report = self.c2(c1_bundle(), [bad, filing_evidence()])
+                self.assertEqual(report['invalid_evidence'][0]['reasons'], [reason])
+                self.assertEqual(report['observations'][0]['checks']['official_filing'],
+                                 'ASSERTIONS_MATCH_UNAUTHENTICATED')
+                self.assertEqual(report['visibility'], 'PRIVATE')
+                self.assertFalse(report['valuation_usable'])
+        for taxonomy in ('us-gaap', 'ifrs-full'):
+            report = self.c2(c1_bundle(), [dict(filing_evidence(), taxonomy=taxonomy)])
+            self.assertEqual(report['invalid_evidence'], [])
+
     def test_parent_attribution_stays_unchecked(self):
         normalization = normalize_snapshot(
             (BASE / 'data/sec_facts.json').read_bytes().decode('utf-8'),

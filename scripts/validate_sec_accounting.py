@@ -7,7 +7,7 @@ from datetime import date
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from scripts.normalize_sec import ANNUAL_FORMS, REPORTING_CURRENCIES, parse_raw
+from scripts.normalize_sec import ANNUAL_FORMS, MAPPING, REPORTING_CURRENCIES, normalize_snapshot, parse_raw
 from scripts.offline_pipeline import PublicExportBlocked, canonical_json, validator
 
 BASE = Path(__file__).resolve().parents[1]
@@ -46,7 +46,10 @@ def _sec_archive_ref(record):
     url = record.get('document_url')
     if type(url) is not str:
         return False
-    parsed = urlsplit(url)
+    try:
+        parsed = urlsplit(url)
+    except ValueError:
+        return False
     if parsed.scheme != 'https' or parsed.netloc.lower() != 'www.sec.gov' or parsed.query or parsed.fragment:
         return False
     accession_path = record.get('accession', '').replace('-', '')
@@ -72,7 +75,7 @@ def _evidence_errors(record):
         date.fromisoformat(record['filed'])
     except (TypeError, ValueError):
         return ['EVIDENCE_DATE_INVALID']
-    if record['taxonomy'] not in {'ifrs-full', 'us-gaap'}:
+    if type(record['taxonomy']) is not str or record['taxonomy'] not in {'ifrs-full', 'us-gaap'}:
         return ['EVIDENCE_TAXONOMY_INVALID']
     if type(record['document_sha256']) is not str or not SHA256.fullmatch(record['document_sha256']):
         return ['EVIDENCE_SHA256_INVALID']
@@ -142,10 +145,8 @@ def validate_normalization(normalization, *, evidence=(), taxonomy_by_cik=None):
         raise ValueError('EVIDENCE_ARRAY_REQUIRED')
     if (type(normalization.get('source')) is not dict
             or type(normalization.get('observations')) is not list
-            or type(normalization.get('groups')) is not list
             or type(normalization.get('coverage')) is not list
             or any(type(item) is not dict for item in normalization['observations'])
-            or any(type(item) is not dict for item in normalization['groups'])
             or any(type(item) is not dict for item in normalization['coverage'])):
         raise ValueError('C1_NORMALIZATION_SHAPE_INVALID')
     taxonomy_by_cik = taxonomy_by_cik or {}
@@ -162,6 +163,14 @@ def validate_normalization(normalization, *, evidence=(), taxonomy_by_cik=None):
         as_of = date.fromisoformat(normalization['as_of'])
     except (KeyError, TypeError, ValueError):
         as_of = None
+
+    # Rebuild the C1 grouping from the retained source; caller-supplied
+    # groups can be incomplete or have their conflict status overwritten.
+    groups_from_raw = []
+    if raw is not None and as_of is not None:
+        groups_from_raw = normalize_snapshot(
+            payload, as_of=as_of, source_locator=normalization['source']['locator']
+        )['groups']
 
     valid_evidence = []
     invalid_evidence = []
@@ -194,7 +203,10 @@ def validate_normalization(normalization, *, evidence=(), taxonomy_by_cik=None):
                              and parts[7].isascii() and parts[7].isdigit())
             pointer_unit = parts[6]
             company = raw['companies'][int(parts[1])] if pointer_valid else None
-            pointer_valid = pointer_valid and company.get('cik') == cik
+            pointer_valid = (pointer_valid and company.get('cik') == cik
+                             and observation.get('id') == hashlib.sha256(
+                                 (digest + pointer).encode('utf-8')).hexdigest()
+                             and str(int(parts[1])) == parts[1] and str(int(parts[7])) == parts[7])
         except (AttributeError, KeyError, IndexError, TypeError, ValueError):
             pointer_valid, pointer_unit, company = False, None, None
         if not pointer_valid:
@@ -202,11 +214,13 @@ def validate_normalization(normalization, *, evidence=(), taxonomy_by_cik=None):
         if not hash_valid or observation.get('source_sha256') != digest:
             reasons.append('RAW_SHA256_MISMATCH')
 
+        metric, nature = MAPPING.get(parts[3], {}).get(parts[4], (None, None)) if pointer_valid else (None, None)
         normalized = observation.get('normalized')
         if not isinstance(normalized, dict):
             normalized = None
         row_consistent = bool(pointer_valid and normalized is not None
                               and normalized.get('value') == str(row.get('val'))
+                              and normalized.get('metric') == metric and normalized.get('nature') == nature
                               and normalized.get('unit') == pointer_unit
                               and normalized.get('start') == row.get('start')
                               and normalized.get('end') == row.get('end')
@@ -244,10 +258,10 @@ def validate_normalization(normalization, *, evidence=(), taxonomy_by_cik=None):
         period_status = 'PASS'
         if filed is None or end is None or end > filed or as_of is None or filed > as_of:
             period_status = 'FAIL'
-        elif normalized and normalized.get('nature') == 'DURATION':
+        elif nature == 'DURATION':
             if start is None or not 300 <= (end - start).days <= 380:
                 period_status = 'OUT_OF_SCOPE'
-        elif normalized and normalized.get('nature') == 'INSTANT' and start is not None:
+        elif nature == 'INSTANT' and start is not None:
             period_status = 'OUT_OF_SCOPE'
         if period_status != 'PASS':
             reasons.append('PERIOD_INVALID_OR_OUT_OF_SCOPE')
@@ -268,7 +282,6 @@ def validate_normalization(normalization, *, evidence=(), taxonomy_by_cik=None):
         dimensions = row.get('dimensions') or row.get('segment') if type(row) is dict else None
         dimensions_status = 'OUT_OF_SCOPE' if dimensions else 'NO_EXPLICIT_DIMENSIONS'
         scope_status = 'UNCHECKED'  # CompanyFacts does not prove consolidation/parent attribution.
-        metric = normalized.get('metric') if normalized else None
         unit_allowed = (pointer_unit == 'shares' if metric in SHARE_METRICS
                         else pointer_unit in REPORTING_CURRENCIES)
         unit_status = 'PASS' if unit_allowed else 'FAIL'
@@ -301,7 +314,7 @@ def validate_normalization(normalization, *, evidence=(), taxonomy_by_cik=None):
 
         form_text = form if type(form) is str else ''
         amendment = 'REVIEW_REQUIRED' if form_text.endswith('/A') else 'AMENDMENT_STATUS_UNCHECKED'
-        group_statuses = sorted({group.get('status') for group in normalization.get('groups', [])
+        group_statuses = sorted({group.get('status') for group in groups_from_raw
                                  if observation.get('id') in group.get('observation_ids', [])})
         if 'CONFLICT' in group_statuses:
             reasons.append('CONFLICT_UNARBITRATED')
@@ -309,7 +322,7 @@ def validate_normalization(normalization, *, evidence=(), taxonomy_by_cik=None):
             reasons.append('C1_NOT_CANDIDATE')
 
         conflicts = {'CONFLICT_UNARBITRATED', 'NORMALIZED_RAW_MISMATCH',
-                     'RAW_SHA256_MISMATCH', 'ACCESSION_INVALID', 'TAXONOMY_CONFLICT',
+                     'RAW_POINTER_INVALID', 'RAW_SHA256_MISMATCH', 'ACCESSION_INVALID', 'TAXONOMY_CONFLICT',
                      'FILING_EVIDENCE_CONFLICT', 'FILING_EVIDENCE_INVALID_REFERENCE',
                      'FILING_EVIDENCE_INVALID_RECORD',
                      'FISCAL_YEAR_INVALID', 'FISCAL_PERIOD_NOT_ANNUAL',
@@ -340,7 +353,7 @@ def validate_normalization(normalization, *, evidence=(), taxonomy_by_cik=None):
         cik = coverage['cik']
         rows = [item for item in output_observations if item['cik'] == cik]
         group_ids = {item['id'] for item in rows}
-        groups = [group for group in normalization.get('groups', [])
+        groups = [group for group in groups_from_raw
                   if group.get('cik') == cik and set(group.get('observation_ids', [])) & group_ids]
         blockers = {'OFFICIAL_FILING_AUTHENTICITY_UNCHECKED', 'ACCOUNTING_VALIDATION_UNCHECKED',
                     'CONSOLIDATION_AND_PARENT_SCOPE_UNCHECKED'}
