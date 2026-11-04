@@ -1,0 +1,27 @@
+name: C3 offline SEC document evidence
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned free schema dependencies
+        run: python -m pip install -r requirements-validation.txt
+      - name: Compile integrated Python modules and tests
+        run: python -m compileall -q scripts tests
+      - name: Run all integrated tests with network denied and no skips
+        run: python -m scripts.run_offline_tests
+      - name: Validate C3 JSON Schema syntax and preserve source data
+        run: |
+          python -m json.tool schemas/c3-document-package.schema.json > /dev/null
+          git diff --exit-code -- data tests/fixtures

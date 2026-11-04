@@ -1,0 +1,424 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/iic/c2-accounting-validation.schema.json",
+  "title": "Private C2 SEC accounting validation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "visibility",
+    "source_verification",
+    "accounting_validation",
+    "valuation_usable",
+    "source_snapshot",
+    "evidence_input_status",
+    "invalid_evidence",
+    "observations",
+    "issuers",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "iic.c2-accounting-validation.v1"
+    },
+    "visibility": {
+      "const": "PRIVATE"
+    },
+    "source_verification": {
+      "const": "NOT_PERFORMED"
+    },
+    "accounting_validation": {
+      "enum": [
+        "UNCHECKED",
+        "CONFLICT"
+      ]
+    },
+    "valuation_usable": {
+      "const": false
+    },
+    "source_snapshot": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "locator",
+            "sha256",
+            "raw_document"
+          ],
+          "properties": {
+            "locator": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "raw_document": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "evidence_input_status": {
+      "enum": [
+        "NOT_PROVIDED",
+        "PRESENT_UNAUTHENTICATED"
+      ]
+    },
+    "invalid_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "input_index",
+          "status",
+          "reasons"
+        ],
+        "properties": {
+          "input_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "status": {
+            "const": "INVALID"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "cik",
+          "namespace",
+          "concept",
+          "metric",
+          "structure",
+          "raw_pointer",
+          "source_sha256",
+          "normalized",
+          "checks",
+          "filing_evidence_reference",
+          "status",
+          "reasons",
+          "accounting_validation",
+          "valuation_usable"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cik": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "namespace": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "concept": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metric": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "structure": {
+            "enum": [
+              "CANDIDATE",
+              "OUT_OF_SCOPE",
+              "REJECTED",
+              "UNMAPPED"
+            ]
+          },
+          "raw_pointer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_sha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "normalized": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "filing_evidence_reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "enum": [
+              "UNCHECKED",
+              "CONFLICT"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accounting_validation": {
+            "enum": [
+              "UNCHECKED",
+              "CONFLICT"
+            ]
+          },
+          "valuation_usable": {
+            "const": false
+          },
+          "checks": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "raw_pointer",
+              "raw_sha256",
+              "raw_normalized",
+              "accession",
+              "form",
+              "period",
+              "fiscal_exercise",
+              "dimensions",
+              "unit",
+              "taxonomy",
+              "consolidation_scope",
+              "parent_attribution",
+              "amendment",
+              "official_filing"
+            ],
+            "properties": {
+              "raw_pointer": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "raw_sha256": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "raw_normalized": {
+                "enum": [
+                  "PASS",
+                  "UNCHECKED"
+                ]
+              },
+              "accession": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "form": {
+                "enum": [
+                  "PASS",
+                  "OUT_OF_SCOPE"
+                ]
+              },
+              "period": {
+                "enum": [
+                  "PASS",
+                  "FAIL",
+                  "OUT_OF_SCOPE"
+                ]
+              },
+              "fiscal_exercise": {
+                "enum": [
+                  "FAIL",
+                  "CONFLICT",
+                  "UNCHECKED_MISSING_REPORTED_FY_FP",
+                  "REPORTED_FY_FP_PRESENT_UNVERIFIED"
+                ]
+              },
+              "dimensions": {
+                "enum": [
+                  "OUT_OF_SCOPE",
+                  "NO_EXPLICIT_DIMENSIONS"
+                ]
+              },
+              "unit": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "taxonomy": {
+                "enum": [
+                  "UNCHECKED",
+                  "CONSISTENT_WITH_B3_ASSERTION",
+                  "CONFLICT"
+                ]
+              },
+              "consolidation_scope": {
+                "enum": [
+                  "UNCHECKED"
+                ]
+              },
+              "parent_attribution": {
+                "enum": [
+                  "UNCHECKED_PARENT_ATTRIBUTION",
+                  "UNCHECKED_SCOPE"
+                ]
+              },
+              "amendment": {
+                "enum": [
+                  "REVIEW_REQUIRED",
+                  "AMENDMENT_STATUS_UNCHECKED"
+                ]
+              },
+              "official_filing": {
+                "enum": [
+                  "UNCHECKED_MISSING",
+                  "INVALID_EVIDENCE_PRESENT",
+                  "INVALID_RECORD",
+                  "INVALID_REFERENCE",
+                  "CONFLICT",
+                  "ASSERTIONS_MATCH_UNAUTHENTICATED"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "issuers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cik",
+          "taxonomy",
+          "observations",
+          "groups",
+          "coverage",
+          "accounting_validation",
+          "valuation_usable",
+          "valuation_blockers",
+          "instruments"
+        ],
+        "properties": {
+          "cik": {
+            "type": "string",
+            "pattern": "^[0-9]{10}$"
+          },
+          "taxonomy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observations": {
+            "type": "array"
+          },
+          "groups": {
+            "type": "array"
+          },
+          "coverage": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "accounting_validation": {
+            "enum": [
+              "UNCHECKED",
+              "CONFLICT"
+            ]
+          },
+          "valuation_usable": {
+            "const": false
+          },
+          "valuation_blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "instruments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "input_index",
+                "issuer_collection_eligible",
+                "instrument_valuation_eligible",
+                "valuation_usable",
+                "valuation_blockers"
+              ],
+              "properties": {
+                "input_index": {
+                  "type": "integer"
+                },
+                "issuer_collection_eligible": {
+                  "type": "boolean"
+                },
+                "instrument_valuation_eligible": {
+                  "type": "boolean"
+                },
+                "valuation_usable": {
+                  "const": false
+                },
+                "valuation_blockers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
