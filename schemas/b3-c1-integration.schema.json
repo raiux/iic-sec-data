@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/iic/b3-c1-integration.schema.json",
+  "title": "Private B3 to C1 offline integration bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "visibility", "mode", "source_verification", "valuation_usable", "b3_plan", "normalization", "issuers", "unsupported_intents"],
+  "properties": {
+    "schema_version": {"const": "iic.b3-c1-integration.v1"},
+    "visibility": {"const": "PRIVATE"},
+    "mode": {"const": "OFFLINE_SIMULATION"},
+    "source_verification": {"const": "NOT_PERFORMED"},
+    "valuation_usable": {"const": false},
+    "b3_plan": {"type": "object", "required": ["schema_version", "visibility", "mode", "source_verification", "collection_intents", "decisions"], "properties": {"schema_version": {"const": "iic.collection-plan.v1"}, "visibility": {"const": "PRIVATE"}, "mode": {"const": "OFFLINE_SIMULATION"}, "source_verification": {"const": "NOT_PERFORMED"}, "collection_intents": {"type": "array"}, "decisions": {"type": "array"}}, "additionalProperties": true},
+    "normalization": {"oneOf": [{"type": "null"}, {"type": "object", "required": ["visibility", "raw_document", "source", "observations", "groups", "coverage"], "properties": {"visibility": {"const": "PRIVATE"}, "raw_document": {"type": "string"}, "source": {"type": "object", "required": ["sha256", "locator", "online_verification"], "properties": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "locator": {"type": "string", "minLength": 1}, "online_verification": {"const": "NOT_PERFORMED"}}}, "observations": {"type": "array"}, "groups": {"type": "array"}, "coverage": {"type": "array"}}, "additionalProperties": true}]},
+    "issuers": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["issuer_id", "cik", "adapter", "collection_intent", "issuer_collection_eligible", "normalization_status", "source_sha256", "raw_document_pointer", "coverage", "observations", "groups", "accounting_validation", "valuation_usable", "valuation_blockers", "instruments"], "properties": {
+      "issuer_id": {"type": "string", "minLength": 1},
+      "cik": {"type": "string", "pattern": "^[0-9]{10}$"},
+      "adapter": {"const": "SEC_COMPANYFACTS"},
+      "collection_intent": {"type": "object", "required": ["issuer_id", "adapter", "state", "input_indices"], "properties": {"issuer_id": {"type": "string"}, "adapter": {"const": "SEC_COMPANYFACTS"}, "state": {"const": "SIMULATED"}, "input_indices": {"type": "array", "items": {"type": "integer", "minimum": 0}}}, "additionalProperties": true},
+      "issuer_collection_eligible": {"const": true},
+      "normalization_status": {"enum": ["C1_NORMALIZED", "CIK_NOT_PRESENT_IN_SNAPSHOT"]},
+      "source_sha256": {"oneOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-f0-9]{64}$"}]},
+      "raw_document_pointer": {"oneOf": [{"type": "null"}, {"const": "/raw_document"}]},
+      "coverage": {"oneOf": [{"type": "null"}, {"type": "object"}]},
+      "observations": {"type": "array", "items": {"type": "object", "required": ["raw_pointer", "source_sha256", "structure", "accounting_validation", "valuation_usable"], "properties": {"raw_pointer": {"type": "string", "pattern": "^/companies/"}, "source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "structure": {"enum": ["CANDIDATE", "OUT_OF_SCOPE", "REJECTED", "UNMAPPED"]}, "accounting_validation": {"const": "UNCHECKED"}, "valuation_usable": {"const": false}}, "additionalProperties": true}},
+      "groups": {"type": "array", "items": {"type": "object", "properties": {"status": {"enum": ["SINGLE_CANDIDATE", "CONFLICT", "REPEATED_VALUE_CANDIDATES"]}, "selected_observation_id": {"type": "null"}, "valuation_usable": {"const": false}}, "additionalProperties": true}},
+      "accounting_validation": {"const": "UNCHECKED"},
+      "valuation_usable": {"const": false},
+      "valuation_blockers": {"type": "array", "items": {"type": "string"}, "contains": {"const": "ACCOUNTING_VALIDATION_UNCHECKED"}},
+      "instruments": {"type": "array", "items": {"type": "object", "required": ["input_index", "identity", "status", "reasons", "issuer_collection_eligible", "instrument_valuation_eligible", "quality", "missing_fields", "provenance", "valuation_usable", "valuation_blockers"], "properties": {"input_index": {"type": "integer", "minimum": 0}, "issuer_collection_eligible": {"type": "boolean"}, "instrument_valuation_eligible": {"type": "boolean"}, "quality": {"type": "object", "required": ["structure"], "properties": {"structure": {"enum": ["VALID", "INVALID"]}}}, "valuation_usable": {"const": false}, "valuation_blockers": {"type": "array", "items": {"type": "string"}, "contains": {"const": "ACCOUNTING_VALIDATION_UNCHECKED"}}}, "additionalProperties": true}}
+    }}
+    },
+    "unsupported_intents": {"type": "array", "items": {"type": "object", "required": ["issuer_id", "adapter", "status"], "properties": {"issuer_id": {"type": "string"}, "adapter": {"type": "string"}, "status": {"type": "string"}}, "additionalProperties": false}}
+  }
+}
