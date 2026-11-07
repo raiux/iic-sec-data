@@ -17,5 +17,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install validation dependencies for complete suite
+        run: python -m pip install -r requirements-validation.txt
       - run: python -m py_compile scripts/route_instrument.py tests/test_route_instrument.py
       - run: python -m unittest discover -s tests -v
