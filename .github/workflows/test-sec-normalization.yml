@@ -1,0 +1,30 @@
+name: C1 offline SEC normalization
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install integrated schema dependencies when present
+        run: |
+          if [ -f requirements-validation.txt ]; then
+            python -m pip install -r requirements-validation.txt
+          fi
+      - name: Complete suite
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Compile
+        run: python -m compileall -q scripts tests
+      - name: Normalize immutable repository snapshot privately
+        run: |
+          python -m scripts.normalize_sec --input data/sec_facts.json --as-of 2026-11-03 > /tmp/c1-sec-candidates.json
+          git diff --exit-code -- data
